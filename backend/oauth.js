@@ -1,10 +1,11 @@
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const { db } = require('./db');
+const { dbClient } = require('./db-client');
+const { requireEnv } = require('./config');
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const CALLBACK_URL = process.env.CALLBACK_URL || 'http://localhost:4000/auth/google/callback';
+const GOOGLE_CLIENT_ID = requireEnv('GOOGLE_CLIENT_ID');
+const GOOGLE_CLIENT_SECRET = requireEnv('GOOGLE_CLIENT_SECRET');
+const CALLBACK_URL = requireEnv('CALLBACK_URL', 'http://localhost:4000/auth/google/callback');
 
 // Only configure Google OAuth if credentials are provided
 if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
@@ -21,7 +22,7 @@ if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
     if (!email) return done(new Error('No email from Google'));
     
     // Check if user exists with this Google ID
-    db.get('SELECT * FROM users WHERE oauth_provider = ? AND oauth_provider_id = ?', 
+    dbClient.get('SELECT * FROM users WHERE oauth_provider = ? AND oauth_id = ?', 
       ['google', googleId], (err, user) => {
         if (err) return done(err);
         
@@ -30,23 +31,24 @@ if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
         }
         
         // Check if email exists (link accounts)
-        db.get('SELECT * FROM users WHERE email = ? OR oauth_email = ?', 
+        dbClient.get('SELECT * FROM users WHERE email = ? OR oauth_email = ?', 
           [email, email], (err, existingUser) => {
             if (err) return done(err);
             
             if (existingUser) {
               // Link OAuth to existing account
-              db.run('UPDATE users SET oauth_provider = ?, oauth_provider_id = ?, oauth_email = ? WHERE id = ?',
+              dbClient.run('UPDATE users SET oauth_provider = ?, oauth_id = ?, oauth_email = ? WHERE id = ?',
                 ['google', googleId, email, existingUser.id], (err) => {
                   if (err) return done(err);
-                  done(null, { ...existingUser, oauth_provider: 'google', oauth_provider_id: googleId });
+                  done(null, { ...existingUser, oauth_provider: 'google', oauth_id: googleId });
                 });
             } else {
               // Create new user
-              db.run('INSERT INTO users (oauth_provider, oauth_provider_id, oauth_email) VALUES (?, ?, ?)',
-                ['google', googleId, email], function(err) {
+              dbClient.run('INSERT INTO users (oauth_provider, oauth_id, oauth_email) VALUES (?, ?, ?)',
+                ['google', googleId, email], function(err, result) {
                   if (err) return done(err);
-                  done(null, { id: this.lastID, oauth_provider: 'google', oauth_provider_id: googleId, oauth_email: email });
+                  const userId = result ? result.lastID : this.lastID;
+                  done(null, { id: userId, oauth_provider: 'google', oauth_id: googleId, oauth_email: email });
                 });
             }
           });
@@ -55,11 +57,11 @@ if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {
 
   passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser((id, done) => {
-    db.get('SELECT * FROM users WHERE id = ?', [id], (err, user) => done(err, user));
+    dbClient.get('SELECT * FROM users WHERE id = ?', [id], (err, user) => done(err, user));
   });
 } else {
-  console.log('⚠️  Google OAuth not configured (missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET)');
-  console.log('   Email/password login will still work. See OAUTH_SETUP.md for setup instructions.');
+  console.log('Google OAuth not configured (missing GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET)');
+  console.log('Email/password login will still work. See OAUTH_SETUP.md for setup instructions.');
 }
 
 module.exports = passport;

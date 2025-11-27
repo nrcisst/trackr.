@@ -8,7 +8,9 @@ A simple web-based trading journal application to track daily profit/loss (P/L) 
 - Record daily P/L for each trading session
 - Add notes and observations for each trading day
 - Navigate between months to review historical data
-- Data persistence via REST API
+- User authentication (email/password + Google OAuth)
+- Profile management with image uploads
+- Data persistence via MySQL database
 
 ## Tech Stack
 
@@ -20,7 +22,10 @@ A simple web-based trading journal application to track daily profit/loss (P/L) 
 **Backend:**
 - Node.js
 - Express.js
-- CORS enabled for cross-origin requests
+- MySQL
+- JWT authentication
+- Passport.js (Google OAuth)
+- Bcrypt for password hashing
 
 ## Project Structure
 
@@ -34,10 +39,20 @@ TradingTracker/
 │       └── app.js          # Frontend JavaScript logic
 ├── backend/
 │   ├── server.js           # Express server
-│   ├── db.js               # Database initialization
-│   └── trades.db           # SQLite database
-├── package.json            # All dependencies
-└── README.md
+│   ├── config.js           # Environment config helper
+│   ├── db.js               # Database initialization (single source of truth)
+│   ├── auth.js             # Email/password auth
+│   ├── authMiddleware.js   # JWT verification
+│   ├── oauth.js            # Google OAuth setup
+│   └── routes/
+│       ├── authRoutes.js   # Auth endpoints
+│       ├── userRoutes.js   # User profile endpoints
+│       └── tradeRoutes.js  # Trade data endpoints
+├── data/                   # SQLite database (gitignored)
+├── uploads/                # User uploads (gitignored)
+├── package.json            # Dependencies
+├── .env.example            # Environment template
+└── DEPLOYMENT.md           # Production deployment guide
 ```
 
 ## Getting Started
@@ -60,67 +75,104 @@ cd TradingTracker
 npm install
 ```
 
+3. Set up environment variables:
+```bash
+cp .env.example .env
+# Edit .env with your configuration
+```
+
 ### Running the Application
 
-1. Start the backend server:
+**Development:**
 ```bash
 npm run dev
 ```
+
+**Production:**
+```bash
+./start-production.sh
+# or
+npm start
+```
+
 The server will run on `http://localhost:4000`
 
-2. Open your browser and navigate to `http://localhost:4000`
+## Environment Variables
 
-## Usage
+See `.env.example` for all available options. Required in production:
 
-1. **View Calendar**: The calendar displays the current month by default
-2. **Navigate Months**: Use the arrow buttons to move between months
-3. **Add Trade Data**: Click on any day to open a modal where you can:
-   - Enter the P/L for that day
-   - Add trading notes and observations
-4. **Save**: Click "Save" to store your data
-5. **View Saved Data**: Days with saved P/L will display the value on the calendar
+- `NODE_ENV=production`
+- `JWT_SECRET` - Random string for JWT signing
+- `SESSION_SECRET` - Random string for sessions
+- `CLIENT_ORIGIN` - Your frontend URL
+
+Optional (for Google OAuth):
+- `GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_SECRET`
+- `CALLBACK_URL`
+
+MySQL configuration:
+- `MYSQL_HOST` - MySQL server host
+- `MYSQL_PORT` - MySQL server port (default: 3306)
+- `MYSQL_USER` - MySQL username
+- `MYSQL_PASSWORD` - MySQL password
+- `MYSQL_DATABASE` - MySQL database name
+
+## Deployment
+
+**See [DEPLOYMENT.md](DEPLOYMENT.md) for complete production deployment guide.**
+
+Key points:
+- Set all environment variables (app will crash if missing in production)
+- Mount `uploads/` to persistent storage
+- Configure MySQL database connection
+- Configure Google OAuth redirect URIs to match your domain
 
 ## API Endpoints
 
-### GET `/api/trades/:date`
-Fetch trading data for a specific date.
+### Authentication
+- `POST /api/auth/register` - Register new user
+- `POST /api/auth/login` - Login with email/password
+- `GET /auth/google` - Initiate Google OAuth
+- `GET /auth/google/callback` - OAuth callback
 
-**Parameters:**
-- `date`: Date in format `YYYY-MM-DD`
+### User
+- `GET /api/user/me` - Get current user profile
+- `POST /api/user/profile-image` - Upload profile image
 
-**Response:**
-```json
-{
-  "date": "2025-01-15",
-  "data": {
-    "pl": 150.50,
-    "notes": "Good trading day with disciplined entries"
-  }
-}
+### Trades
+- `GET /api/trades?year=YYYY&month=MM` - Get trades for month
+- `GET /api/trades/:date` - Get trade for specific date
+- `POST /api/trades/:date` - Save/update trade notes
+
+### Trade Entries
+- `GET /api/entries/month?year=YYYY&month=MM` - Get all entries for month
+- `GET /api/entries/:date` - Get entries for specific date
+- `POST /api/entries` - Create new trade entry
+- `PUT /api/entries/:id` - Update trade entry
+- `DELETE /api/entries/:id` - Delete trade entry
+
+### Health
+- `GET /health` - Health check endpoint
+
+## Security Features
+
+- JWT-based authentication with 7-day expiry
+- Bcrypt password hashing (10 rounds)
+- HTTP-only, secure cookies in production
+- CORS configured for specific origin
+- Input validation and sanitization
+- SQL injection protection via parameterized queries
+- Environment-based secret management
+
+## Development
+
+The app uses nodemon for hot-reloading in development:
+```bash
+npm run dev
 ```
 
-### POST `/api/trades/:date`
-Save trading data for a specific date.
-
-**Parameters:**
-- `date`: Date in format `YYYY-MM-DD`
-
-**Body:**
-```json
-{
-  "pl": 150.50,
-  "notes": "Trading notes here"
-}
-```
-
-## Future Enhancements
-
-- Database integration for persistent storage
-- User authentication
-- Trading statistics and analytics
-- Export data to CSV/PDF
-- Dark mode
-- Responsive mobile design
+Database schema is automatically created on startup via `backend/db.js`.
 
 ## License
 

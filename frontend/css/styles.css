@@ -40,6 +40,7 @@ header {
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  z-index: 100;
 }
 
 header:hover {
@@ -62,7 +63,18 @@ h1 {
 #month-controls {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 1rem;
+  padding: 1rem 2rem;
+  margin-bottom: 2rem;
+}
+
+#current-month-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 150px;
+  text-align: center;
 }
 
 button {
@@ -1403,13 +1415,13 @@ button:active {
   top: 60px;
   right: 0;
   width: 300px;
-  background: #0a0a0a !important;
-  opacity: 1 !important;
+  background: #1a1a1a;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.9);
   z-index: 1000;
+  opacity: 0.85;
 }
 
 .profile-header {
@@ -1445,16 +1457,30 @@ button:active {
   justify-content: center;
 }
 
-.profile-email {
-  font-size: 16px;
-  font-weight: 500;
+.profile-username {
+  font-size: 18px;
+  font-weight: 600;
   margin-bottom: 0.25rem;
+  color: var(--text-primary);
+}
+
+.profile-email {
+  font-size: 14px;
+  font-weight: 400;
+  margin-bottom: 0.25rem;
+  color: rgba(255, 255, 255, 0.7);
   word-break: break-all;
 }
 
 .profile-since {
   font-size: 13px;
   color: rgba(255, 255, 255, 0.6);
+}
+
+.modal-hint {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0.5rem 0;
 }
 
 .profile-actions {
@@ -1472,6 +1498,7 @@ button:active {
   cursor: pointer;
   transition: all 0.2s;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
 .profile-btn:hover {
@@ -1496,10 +1523,117 @@ button:active {
   transition: all 0.2s;
   font-size: 14px;
   font-family: 'Inter', sans-serif;
+  text-align: center;
 }
 
 .profile-logout-btn:hover {
   background: rgba(255, 68, 68, 0.1);
   border-color: #ff4444;
+}
+
+/* Username Popup */
+.username-popup {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px;
+  width: 300px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+}
+
+.username-popup h3 {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  color: var(--text-color);
+}
+
+.username-popup input {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 8px;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-color);
+  font-size: 14px;
+}
+
+.popup-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 0 0 15px 0;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.popup-actions button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.btn-save {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btn-save:hover {
+  background: var(--primary-hover);
+}
+
+.btn-cancel {
+  background: var(--card-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.btn-cancel:hover {
+  background: var(--hover-bg);
+}
+
+/* Notification Toast */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 2000;
+  display: none;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.notification.success {
+  background: #10b981;
+  color: white;
+}
+
+.notification.error {
+  background: #ef4444;
+  color: white;
 }
 

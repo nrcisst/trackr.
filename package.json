@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
-    "test-server": "NODE_ENV=test node backend/server.js"
+    "test-server": "NODE_ENV=test node backend/server.js",
+    "init:db": "node backend/init-db.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -17,11 +18,12 @@
     "express-session": "^1.18.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
+    "mysql2": "^3.15.3",
     "passport": "^0.7.0",
-    "passport-google-oauth20": "^2.0.0",
-    "sqlite3": "^5.1.7"
+    "passport-google-oauth20": "^2.0.0"
   },
   "devDependencies": {
+    "eslint": "^9.39.1",
     "nodemon": "^3.1.11"
   }
 }

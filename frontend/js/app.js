@@ -18,42 +18,42 @@ async function authedFetch(url, options = {}) {
     showAuth();
     throw new Error('No token');
   }
-  
+
   options.headers = {
     ...options.headers,
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
   };
-  
+
   const response = await fetch(url, options);
-  
+
   if (response.status === 401) {
     clearToken();
     showAuth();
     throw new Error('Unauthorized');
   }
-  
+
   return response;
 }
 
-async function handleLogin() {
-  const email = document.getElementById('loginEmail').value;
-  const password = document.getElementById('loginPassword').value;
-  
+window.handleLogin = async function () {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value.trim();
+
   if (!email || !password) {
     alert('Please enter email and password');
     return;
   }
-  
+
   try {
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-    
+
     const data = await response.json();
-    
+
     if (response.ok) {
       setToken(data.token);
       showApp();
@@ -66,24 +66,24 @@ async function handleLogin() {
   }
 }
 
-async function handleRegister() {
-  const email = document.getElementById('registerEmail').value;
-  const password = document.getElementById('registerPassword').value;
-  
+window.handleRegister = async function () {
+  const email = document.getElementById('registerEmail').value.trim();
+  const password = document.getElementById('registerPassword').value.trim();
+
   if (!email || !password) {
     alert('Please enter email and password');
     return;
   }
-  
+
   try {
     const response = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
     });
-    
+
     const data = await response.json();
-    
+
     if (response.ok) {
       setToken(data.token);
       showApp();
@@ -96,7 +96,9 @@ async function handleRegister() {
   }
 }
 
-function handleLogout() {
+window.handleLogout = function () {
+
+
   clearToken();
   showAuth();
   // Reset state
@@ -114,12 +116,16 @@ function showApp() {
   document.getElementById('appContainer').style.display = 'block';
 }
 
-function showLogin() {
+window.showLogin = function () {
+
+
   document.getElementById('loginForm').style.display = 'block';
   document.getElementById('registerForm').style.display = 'none';
 }
 
-function showRegister() {
+window.showRegister = function () {
+
+
   document.getElementById('loginForm').style.display = 'none';
   document.getElementById('registerForm').style.display = 'block';
 }
@@ -130,7 +136,7 @@ async function loadUserInfo() {
   try {
     const res = await authedFetch(`${apiBase}/user/me`);
     if (!res.ok) throw new Error('Failed to load user');
-    
+
     currentUser = await res.json();
     renderUserHeader();
   } catch (err) {
@@ -140,13 +146,14 @@ async function loadUserInfo() {
 
 function renderUserHeader() {
   if (!currentUser) return;
-  
+
+  const displayName = currentUser.username || currentUser.email;
   const email = currentUser.email;
-  const initials = getInitials(email);
+  const initials = getInitials(displayName);
   const profileImage = currentUser.profileImage;
-  
+
   // Header avatar
-  document.getElementById('headerEmail').textContent = email;
+  document.getElementById('headerEmail').textContent = displayName;
   if (profileImage) {
     document.getElementById('headerAvatarImg').src = profileImage;
     document.getElementById('headerAvatarImg').style.display = 'block';
@@ -156,12 +163,13 @@ function renderUserHeader() {
     document.getElementById('headerAvatarInitials').style.display = 'block';
     document.getElementById('headerAvatarImg').style.display = 'none';
   }
-  
-  // Dropdown avatar
+
+  // Dropdown
+  document.getElementById('dropdownUsername').textContent = currentUser.username || 'Set username';
   document.getElementById('dropdownEmail').textContent = email;
-  document.getElementById('dropdownMemberSince').textContent = 
+  document.getElementById('dropdownMemberSince').textContent =
     `Member since ${formatDate(currentUser.memberSince)}`;
-  
+
   if (profileImage) {
     document.getElementById('dropdownAvatarImg').src = profileImage;
     document.getElementById('dropdownAvatarImg').style.display = 'block';
@@ -171,7 +179,7 @@ function renderUserHeader() {
     document.getElementById('dropdownAvatarInitials').style.display = 'block';
     document.getElementById('dropdownAvatarImg').style.display = 'none';
   }
-  
+
   document.getElementById('userHeader').style.display = 'flex';
 }
 
@@ -189,28 +197,32 @@ function formatDate(dateStr) {
   return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 }
 
-function toggleProfileDropdown() {
+window.toggleProfileDropdown = function () {
+
+
   const dropdown = document.getElementById('profileDropdown');
   dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
 }
 
-async function handleProfileImageUpload(event) {
+window.handleProfileImageUpload = async function (event) {
+
+
   const file = event.target.files[0];
   if (!file) return;
-  
+
   if (file.size > 5 * 1024 * 1024) {
     showError('File too large. Maximum size is 5MB.');
     return;
   }
-  
+
   if (!file.type.startsWith('image/')) {
     showError('Please select an image file.');
     return;
   }
-  
+
   const formData = new FormData();
   formData.append('profileImage', file);
-  
+
   try {
     const token = getToken();
     const res = await fetch(`${apiBase}/user/profile-image`, {
@@ -220,21 +232,21 @@ async function handleProfileImageUpload(event) {
       },
       body: formData
     });
-    
+
     if (!res.ok) {
       const error = await res.json();
       throw new Error(error.error || 'Upload failed');
     }
-    
+
     const data = await res.json();
     currentUser.profileImage = data.profileImage;
     renderUserHeader();
-    
+
     showSuccess('Profile picture updated!');
   } catch (err) {
     showError(err.message);
   }
-  
+
   event.target.value = '';
 }
 
@@ -246,6 +258,9 @@ document.addEventListener('click', (e) => {
     dropdown.style.display = 'none';
   }
 });
+
+// Remove tooltips on scroll
+window.addEventListener('scroll', removeAllTooltips, true);
 
 // ---- App Code ----
 
@@ -337,6 +352,10 @@ function confirm(message, title = 'Confirm Action') {
 }
 
 // ---- Helpers -------------------
+
+function removeAllTooltips() {
+  document.querySelectorAll('.calendar-tooltip').forEach(t => t.remove());
+}
 
 function formatPL(value) {
   if (typeof value !== 'number' || isNaN(value)) return '$0.00';
@@ -461,7 +480,7 @@ function updateStats() {
   document.getElementById("stat-profit-factor").textContent = profitFactor;
 
   document.getElementById("stat-max-win").textContent = formatPL(maxWin);
-  document.getElementById("stat-max-loss").textContent = formatPL(Math.abs(maxLoss));
+  document.getElementById("stat-max-loss").textContent = formatPL(maxLoss);
 
   // Update monthly stats and equity curve
   updateMonthlyStats();
@@ -481,7 +500,7 @@ function updateMonthlyStats() {
   let redDayTotal = 0;
 
   trades.forEach(t => {
-    if (typeof t.pl === 'number') {
+    if (typeof t.pl === 'number' && t.pl !== 0) {
       tradingDays++;
       monthlyPl += t.pl;
 
@@ -505,7 +524,7 @@ function updateMonthlyStats() {
 
   document.getElementById("monthly-trading-days").textContent = tradingDays;
   document.getElementById("monthly-avg-green").textContent = formatPL(avgGreenDay);
-  document.getElementById("monthly-avg-red").textContent = formatPL(Math.abs(avgRedDay));
+  document.getElementById("monthly-avg-red").textContent = formatPL(avgRedDay);
 }
 
 // ---- Equity Curve ----
@@ -533,7 +552,7 @@ function renderEquityCurve() {
   }
 
   const labels = equityData.map(d => {
-    const [year, month, day] = d.date.split('-');
+    const [, month, day] = d.date.split('-');
     return `${month}/${day}`;
   });
 
@@ -643,8 +662,8 @@ async function renderJournalView() {
     tickers: []
   }));
 
-  // Filter out days with no P/L
-  trades = trades.filter(t => t.pl !== 0);
+  // Filter out days with no P/L AND no notes
+  trades = trades.filter(t => t.pl !== 0 || t.notes.trim().length > 0);
 
   // Use cached entries data
   const entriesData = window.entriesByDate || {};
@@ -832,6 +851,7 @@ function setupViewControls() {
 // ---- Calendar Rendering --------
 
 function renderCalendar() {
+  removeAllTooltips();
   const calendarEl = document.getElementById("calendar");
   const labelEl = document.getElementById("current-month-label");
 
@@ -889,7 +909,7 @@ function renderCalendar() {
       }
 
       // Add hover tooltip
-      cell.addEventListener('mouseenter', async (e) => {
+      cell.addEventListener('mouseenter', async () => {
         const tooltip = document.createElement('div');
         tooltip.className = 'calendar-tooltip';
 
@@ -968,6 +988,7 @@ function renderCalendar() {
 // ---- Modal Logic ----
 
 async function openDayModal(dateKey) {
+  removeAllTooltips();
   const modal = document.getElementById("day-modal");
   const label = document.getElementById("modal-date-label");
   const notesInput = document.getElementById("notes-input");
@@ -1406,26 +1427,33 @@ async function init() {
   renderCalendar();
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-  // Check if token in URL (from OAuth redirect)
+function bootstrapFromUrlToken() {
   const urlParams = new URLSearchParams(window.location.search);
   const tokenFromUrl = urlParams.get('token');
   const errorFromUrl = urlParams.get('error');
-  
+
   if (tokenFromUrl) {
     setToken(tokenFromUrl);
-    // Clean URL
     window.history.replaceState({}, document.title, '/');
     showApp();
     init();
-    return;
+    return true;
   }
-  
+
   if (errorFromUrl) {
     alert('OAuth login failed. Please try again.');
     window.history.replaceState({}, document.title, '/');
   }
-  
+
+  return false;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Check for OAuth token in URL first
+  if (bootstrapFromUrlToken()) {
+    return;
+  }
+
   // Normal flow
   if (getToken()) {
     showApp();
@@ -1434,3 +1462,67 @@ document.addEventListener("DOMContentLoaded", () => {
     showAuth();
   }
 });
+
+// ---- Username Management ----
+
+window.showUsernameEdit = function() {
+  const popup = document.getElementById('usernamePopup');
+  const input = document.getElementById('usernameInput');
+  input.value = currentUser?.username || '';
+  popup.style.display = 'block';
+  input.focus();
+};
+
+window.closeUsernamePopup = function() {
+  document.getElementById('usernamePopup').style.display = 'none';
+};
+
+function showNotification(message, type = 'success') {
+  const notification = document.getElementById('notification');
+  notification.textContent = message;
+  notification.className = `notification ${type}`;
+  notification.style.display = 'block';
+  
+  setTimeout(() => {
+    notification.style.display = 'none';
+  }, 3000);
+}
+
+window.saveUsername = async function() {
+  const username = document.getElementById('usernameInput').value.trim();
+  
+  if (!username) {
+    showNotification('Username cannot be empty', 'error');
+    return;
+  }
+  
+  if (username.length < 3) {
+    showNotification('Username must be at least 3 characters', 'error');
+    return;
+  }
+  
+  if (!/^[a-zA-Z0-9_-]+$/.test(username)) {
+    showNotification('Username can only contain letters, numbers, - and _', 'error');
+    return;
+  }
+  
+  try {
+    const res = await authedFetch(`${apiBase}/user/username`, {
+      method: 'PUT',
+      body: JSON.stringify({ username })
+    });
+    
+    const data = await res.json();
+    
+    if (res.ok) {
+      currentUser.username = data.username;
+      renderUserHeader();
+      closeUsernamePopup();
+      showNotification('Username updated successfully!', 'success');
+    } else {
+      showNotification(data.error || 'Failed to update username', 'error');
+    }
+  } catch (err) {
+    showNotification('Error updating username', 'error');
+  }
+};

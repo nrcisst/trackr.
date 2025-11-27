@@ -39,7 +39,7 @@
       <div id="registerForm" style="display:none">
         <h2>Register</h2>
         <input type="email" id="registerEmail" placeholder="Email" />
-        <input type="password" id="registerPassword" placeholder="Password (min 8 chars)" />
+        <input type="password" id="registerPassword" placeholder="Password (min 8 chars)" minlength="8" />
         <button onclick="handleRegister()">Register</button>
         <p>Already have an account? <a href="#" onclick="showLogin(); return false;">Login</a></p>
       </div>
@@ -50,11 +50,6 @@
   <div id="appContainer" style="display:none">
   <header>
     <h1>trackr.</h1>
-    <div id="month-controls">
-      <button id="prev-month">&larr; Prev</button>
-      <span id="current-month-label">November 2023</span>
-      <button id="next-month">Next &rarr;</button>
-    </div>
     
     <div id="userHeader" style="display:none;">
       <div class="user-info" onclick="toggleProfileDropdown()">
@@ -75,12 +70,14 @@
             <span id="dropdownAvatarInitials"></span>
           </div>
           <div class="profile-info">
+            <div id="dropdownUsername" class="profile-username"></div>
             <div id="dropdownEmail" class="profile-email"></div>
             <div id="dropdownMemberSince" class="profile-since"></div>
           </div>
         </div>
         
         <div class="profile-actions">
+          <button onclick="showUsernameEdit()" class="profile-btn">Change Username</button>
           <label for="profileImageInput" class="profile-btn">
             Change Profile Picture
           </label>
@@ -93,6 +90,12 @@
       </div>
     </div>
   </header>
+
+  <div id="month-controls">
+    <button id="prev-month">&larr; Prev</button>
+    <span id="current-month-label">November 2023</span>
+    <button id="next-month">Next &rarr;</button>
+  </div>
 
   <section id="stats">
     <div class="stat-card">
@@ -250,7 +253,7 @@
         <!-- Row 2: Optional Data -->
         <div class="form-row optional-fields">
           <select id="entry-tag">
-            <option value="">Select Tag...</option>
+            <option value="">Tag</option>
             <option value="Breakout">Breakout</option>
             <option value="Pullback">Pullback</option>
             <option value="Reversal">Reversal</option>
@@ -259,7 +262,7 @@
           </select>
 
           <select id="entry-confidence">
-            <option value="">Conf...</option>
+            <option value="">Conf</option>
             <option value="1">1/5</option>
             <option value="2">2/5</option>
             <option value="3">3/5</option>
@@ -268,7 +271,7 @@
           </select>
 
           <select id="entry-quality">
-            <option value="">Grade...</option>
+            <option value="">Grade</option>
             <option value="A">A Setup</option>
             <option value="B">B Setup</option>
             <option value="C">C Setup</option>
@@ -307,6 +310,20 @@
   </svg>
 
   </div> <!-- End appContainer -->
+
+  <!-- Username Edit Popup -->
+  <div id="usernamePopup" class="username-popup" style="display:none;">
+    <h3>Change Username</h3>
+    <input type="text" id="usernameInput" placeholder="Enter new username" minlength="3" maxlength="30" />
+    <p class="popup-hint">3-30 chars. Letters, numbers, - and _ only.</p>
+    <div class="popup-actions">
+      <button class="btn-save" onclick="saveUsername()">Save</button>
+      <button class="btn-cancel" onclick="closeUsernamePopup()">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="notification" class="notification"></div>
 
   <script src="js/app.js"></script>
 </body>
