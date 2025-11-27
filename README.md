@@ -112,11 +112,11 @@ Optional (for Google OAuth):
 - `CALLBACK_URL`
 
 MySQL configuration:
-- `MYSQL_HOST` - MySQL server host
-- `MYSQL_PORT` - MySQL server port (default: 3306)
-- `MYSQL_USER` - MySQL username
-- `MYSQL_PASSWORD` - MySQL password
-- `MYSQL_DATABASE` - MySQL database name
+- `MYSQLHOST` - MySQL server host
+- `MYSQLPORT` - MySQL server port (default: 3306)
+- `MYSQLUSER` - MySQL username
+- `MYSQLPASSWORD` - MySQL password
+- `MYSQLDATABASE` - MySQL database name
 
 ## Deployment
 
