@@ -3,7 +3,8 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>Trade Tracker</title>
+  <title>trackr.</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23000000'/%3E%3Ctext x='50%25' y='52%25' font-family='IBM Plex Mono, monospace' font-size='32' fill='%23ffffff' text-anchor='middle' dominant-baseline='middle'%3Et%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -13,6 +14,7 @@
   <div id="authContainer">
     <div class="auth-box">
       <h1>trackr.</h1>
+      <p class="subtitle">A focused, pro-grade trading journal.</p>
       <div id="loginForm">
         <h2>Login</h2>
         <input type="email" id="loginEmail" placeholder="Email" />
@@ -49,8 +51,14 @@
   <!-- App Container -->
   <div id="appContainer" style="display:none">
   <header>
-    <h1>trackr.</h1>
-    
+    <div class="header-left">
+      <h1>trackr.</h1>
+      <div class="mode-toggle header-mode">
+        <button id="mode-month" class="mode-btn active">Monthly</button>
+        <button id="mode-year" class="mode-btn">Yearly</button>
+      </div>
+    </div>
+
     <div id="userHeader" style="display:none;">
       <div class="user-info" onclick="toggleProfileDropdown()">
         <div class="user-avatar" id="headerAvatar">
@@ -62,7 +70,7 @@
           <path d="M6 8L2 4h8z"/>
         </svg>
       </div>
-      
+
       <div id="profileDropdown" class="profile-dropdown" style="display:none;">
         <div class="profile-header">
           <div class="profile-avatar-large" id="dropdownAvatar">
@@ -75,7 +83,7 @@
             <div id="dropdownMemberSince" class="profile-since"></div>
           </div>
         </div>
-        
+
         <div class="profile-actions">
           <button onclick="showUsernameEdit()" class="profile-btn">Change Username</button>
           <label for="profileImageInput" class="profile-btn">
@@ -83,13 +91,25 @@
           </label>
           <input type="file" id="profileImageInput" accept="image/*" style="display:none;" onchange="handleProfileImageUpload(event)">
         </div>
-        
+
         <div class="profile-divider"></div>
-        
+
         <button onclick="handleLogout()" class="profile-logout-btn">Logout</button>
       </div>
     </div>
   </header>
+
+  <div id="header-status" class="header-status hidden">
+    <div class="status-pill">
+      <span class="status-label">YTD</span>
+      <span class="status-value" id="status-ytd">$0.00</span>
+    </div>
+    <div class="status-pill">
+      <span class="status-label">MTD</span>
+      <span class="status-value" id="status-mtd">$0.00</span>
+    </div>
+    <button id="quick-add" class="status-action">+ Quick Add</button>
+  </div>
 
   <div id="month-controls">
     <button id="prev-month">&larr; Prev</button>
@@ -143,6 +163,32 @@
     </div>
   </section>
 
+  <section id="yearly-stats" class="hidden">
+    <h2 class="section-title">Year to Date</h2>
+    <div class="monthly-stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">YTD P/L</div>
+        <div class="stat-value" id="ytd-pl">$0.00</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Green Months</div>
+        <div class="stat-value positive" id="ytd-green-months">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Red Months</div>
+        <div class="stat-value negative" id="ytd-red-months">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Best Month</div>
+        <div class="stat-value positive" id="ytd-best-month">$0.00</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Worst Month</div>
+        <div class="stat-value negative" id="ytd-worst-month">$0.00</div>
+      </div>
+    </div>
+  </section>
+
   <!-- Equity Curve -->
   <section id="equity-curve-section">
     <h2 class="section-title">Equity Curve</h2>
@@ -182,6 +228,11 @@
     <!-- Calendar View -->
     <div id="calendar-container">
       <div id="calendar"></div>
+    </div>
+
+    <!-- Yearly View -->
+    <div id="year-container" class="hidden">
+      <div id="year-grid"></div>
     </div>
 
     <!-- Journal View -->

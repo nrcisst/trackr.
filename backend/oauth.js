@@ -5,7 +5,11 @@ const { requireEnv } = require('./config');
 
 const GOOGLE_CLIENT_ID = requireEnv('GOOGLE_CLIENT_ID');
 const GOOGLE_CLIENT_SECRET = requireEnv('GOOGLE_CLIENT_SECRET');
-const CALLBACK_URL = requireEnv('CALLBACK_URL', 'http://localhost:4000/auth/google/callback');
+
+// In production we require a CALLBACK_URL to avoid redirect mismatch; in dev we fall back to localhost
+const CALLBACK_URL = process.env.NODE_ENV === 'production'
+  ? requireEnv('CALLBACK_URL')
+  : (process.env.CALLBACK_URL || 'http://localhost:4000/auth/google/callback');
 
 // Only configure Google OAuth if credentials are provided
 if (GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET) {

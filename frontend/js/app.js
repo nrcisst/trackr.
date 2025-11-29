@@ -19,17 +19,22 @@ async function authedFetch(url, options = {}) {
     throw new Error('No token');
   }
 
-  options.headers = {
+  const isFormData = options.body instanceof FormData;
+  const headers = {
     ...options.headers,
-    'Authorization': `Bearer ${token}`,
-    'Content-Type': 'application/json'
+    'Authorization': `Bearer ${token}`
   };
 
-  const response = await fetch(url, options);
+  if (!isFormData && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const response = await fetch(url, { ...options, headers });
 
   if (response.status === 401) {
     clearToken();
     showAuth();
+    showError('Session expired. Please log in again.');
     throw new Error('Unauthorized');
   }
 
@@ -39,13 +44,24 @@ async function authedFetch(url, options = {}) {
 window.handleLogin = async function () {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value.trim();
+  const loginBtn = document.querySelector('#loginForm button');
 
   if (!email || !password) {
-    alert('Please enter email and password');
+    showError('Please enter email and password');
+    return;
+  }
+
+  if (!email.includes('@')) {
+    showError('Enter a valid email');
     return;
   }
 
   try {
+    if (loginBtn) {
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Logging in...';
+    }
+
     const response = await fetch('/api/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -56,13 +72,19 @@ window.handleLogin = async function () {
 
     if (response.ok) {
       setToken(data.token);
+      showSuccess('Logged in');
       showApp();
       init();
     } else {
-      alert(data.error || 'Login failed');
+      showError(data.error || 'Login failed');
     }
   } catch (err) {
-    alert('Login error: ' + err.message);
+    showError('Login error: ' + err.message);
+  } finally {
+    if (loginBtn) {
+      loginBtn.disabled = false;
+      loginBtn.textContent = 'Login';
+    }
   }
 }
 
@@ -70,12 +92,29 @@ window.handleRegister = async function () {
   const email = document.getElementById('registerEmail').value.trim();
   const password = document.getElementById('registerPassword').value.trim();
 
+  const registerBtn = document.querySelector('#registerForm button');
+
   if (!email || !password) {
-    alert('Please enter email and password');
+    showError('Please enter email and password');
+    return;
+  }
+
+  if (!email.includes('@')) {
+    showError('Enter a valid email');
+    return;
+  }
+
+  if (password.length < 8) {
+    showError('Password must be at least 8 characters');
     return;
   }
 
   try {
+    if (registerBtn) {
+      registerBtn.disabled = true;
+      registerBtn.textContent = 'Creating account...';
+    }
+
     const response = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -86,13 +125,19 @@ window.handleRegister = async function () {
 
     if (response.ok) {
       setToken(data.token);
+      showSuccess('Account created');
       showApp();
       init();
     } else {
-      alert(data.error || 'Registration failed');
+      showError(data.error || 'Registration failed');
     }
   } catch (err) {
-    alert('Registration error: ' + err.message);
+    showError('Registration error: ' + err.message);
+  } finally {
+    if (registerBtn) {
+      registerBtn.disabled = false;
+      registerBtn.textContent = 'Register';
+    }
   }
 }
 
@@ -272,12 +317,16 @@ let currentMonth;
 
 let tradesByDate = {};
 let currentView = 'calendar'; // 'calendar' or 'journal'
+let calendarMode = 'month'; // 'month' or 'year'
 let filterDayType = 'all'; // 'all', 'green', 'red'
 let sortBy = 'date'; // 'date', 'pl-high', 'pl-low', 'trades'
 let filterTicker = ''; // ticker filter
 let reviewMode = false;
 let reviewDays = []; // filtered days for review
 let currentReviewIndex = 0;
+let yearMonthPl = {}; // month -> pl for current year
+let ytdPl = 0;
+let mtdPl = 0;
 
 // ---- Toast Notifications ----
 
@@ -442,6 +491,41 @@ async function fetchMonthData(year, month) {
   }
 }
 
+async function fetchYearData(year) {
+  try {
+    const res = await authedFetch(`${apiBase}/trades/year?year=${year}`);
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.error || "Failed to fetch year data");
+    }
+    const json = await res.json();
+
+    // Initialize all months to 0
+    const months = {};
+    for (let i = 1; i <= 12; i++) {
+      months[i] = 0;
+    }
+
+    (json.data || []).forEach(row => {
+      if (row.month) {
+        const parts = row.month.split('-');
+        const monthNum = parseInt(parts[1], 10);
+        months[monthNum] = row.pl || 0;
+      }
+    });
+
+    yearMonthPl = months;
+    updateYearStats();
+    renderYearGrid();
+    if (calendarMode === 'year') {
+      renderEquityCurve();
+    }
+  } catch (err) {
+    console.error("fetchYearData error:", err);
+    showError(err.message || "Failed to load year data");
+  }
+}
+
 function updateStats() {
   const trades = Object.values(tradesByDate);
   let netPl = 0;
@@ -485,6 +569,71 @@ function updateStats() {
   // Update monthly stats and equity curve
   updateMonthlyStats();
   renderEquityCurve();
+
+  // Update header MTD based on monthly net P/L
+  mtdPl = monthlyPlForHeader(tradesByDate);
+  renderHeaderStatus();
+}
+
+function monthlyPlForHeader(tradesMap) {
+  return Object.values(tradesMap).reduce((sum, t) => sum + (t.pl || 0), 0);
+}
+
+// ---- Year Grid ----
+
+function renderYearGrid() {
+  const grid = document.getElementById('year-grid');
+  if (!grid) return;
+
+  grid.innerHTML = '';
+  const entries = [];
+
+  let maxAbs = 0;
+  for (let m = 1; m <= 12; m++) {
+    const pl = yearMonthPl[m] || 0;
+    entries.push({ month: m, pl });
+    if (Math.abs(pl) > maxAbs) maxAbs = Math.abs(pl);
+  }
+
+  entries.forEach(({ month, pl }, idx) => {
+    const cell = document.createElement('div');
+    cell.className = 'year-cell';
+
+    if (pl > 0) cell.classList.add('positive');
+    else if (pl < 0) cell.classList.add('negative');
+    else cell.classList.add('neutral');
+
+    const label = document.createElement('div');
+    label.className = 'month-label';
+    const date = new Date(currentYear, month - 1, 1);
+    label.textContent = date.toLocaleString('default', { month: 'short' });
+
+    const plEl = document.createElement('div');
+    plEl.className = 'month-pl';
+    plEl.textContent = formatPL(pl);
+
+    cell.appendChild(label);
+    cell.appendChild(plEl);
+
+    // Staggered reveal
+    cell.style.animation = `fadeUp 0.35s ease ${idx * 0.03}s forwards`;
+
+    // Click to jump into that month
+    cell.addEventListener('click', async () => {
+      calendarMode = 'month';
+      document.getElementById('mode-month').classList.add('active');
+      document.getElementById('mode-year').classList.remove('active');
+      document.getElementById('yearly-stats').classList.add('hidden');
+      document.getElementById('monthly-stats').classList.remove('hidden');
+      document.getElementById('year-container').classList.add('hidden');
+      document.getElementById('calendar-container').classList.remove('hidden');
+      currentMonth = month - 1;
+      await fetchMonthData(currentYear, currentMonth);
+      renderCalendar();
+    });
+
+    grid.appendChild(cell);
+  });
 }
 
 // ---- Monthly Stats ----
@@ -527,36 +676,92 @@ function updateMonthlyStats() {
   document.getElementById("monthly-avg-red").textContent = formatPL(avgRedDay);
 }
 
+// ---- Yearly Stats ----
+
+function updateYearStats() {
+  const values = Object.values(yearMonthPl || {});
+  let ytdPlCalc = 0;
+  let greenMonths = 0;
+  let redMonths = 0;
+  let best = 0;
+  let worst = 0;
+
+  values.forEach(v => {
+    ytdPlCalc += v;
+    if (v > 0) greenMonths++;
+    if (v < 0) redMonths++;
+    if (v > best) best = v;
+    if (v < worst) worst = v;
+  });
+
+  ytdPl = ytdPlCalc;
+  const ytdPlEl = document.getElementById('ytd-pl');
+  ytdPlEl.textContent = formatPL(ytdPl);
+  ytdPlEl.className = `stat-value ${ytdPl > 0 ? 'positive' : ytdPl < 0 ? 'negative' : ''}`;
+
+  document.getElementById('ytd-green-months').textContent = greenMonths;
+  document.getElementById('ytd-red-months').textContent = redMonths;
+
+  const bestEl = document.getElementById('ytd-best-month');
+  bestEl.textContent = formatPL(best);
+  bestEl.className = `stat-value ${best > 0 ? 'positive' : best < 0 ? 'negative' : ''}`;
+
+  const worstEl = document.getElementById('ytd-worst-month');
+  worstEl.textContent = formatPL(worst);
+  worstEl.className = `stat-value ${worst > 0 ? 'positive' : worst < 0 ? 'negative' : ''}`;
+
+  renderHeaderStatus();
+}
+
 // ---- Equity Curve ----
 
 let equityCurveChart = null;
 
 function renderEquityCurve() {
-  const trades = Object.entries(tradesByDate)
-    .map(([date, data]) => ({ date, pl: data.pl || 0 }))
-    .sort((a, b) => a.date.localeCompare(b.date));
+  let labels = [];
+  let data = [];
 
-  // Calculate cumulative P/L
-  let cumulative = 0;
-  const equityData = trades.map(t => {
-    cumulative += t.pl;
-    return {
-      date: t.date,
-      equity: cumulative
-    };
-  });
+  if (calendarMode === 'year') {
+    // Use monthly aggregates for current year
+    let cumulative = 0;
+    for (let m = 1; m <= 12; m++) {
+      const pl = yearMonthPl[m] || 0;
+      cumulative += pl;
+      data.push(cumulative);
+      const date = new Date(currentYear, m - 1, 1);
+      labels.push(date.toLocaleString('default', { month: 'short' }));
+    }
 
-  // If no trades, show empty state
-  if (equityData.length === 0) {
-    equityData.push({ date: formatDateKey(currentYear, currentMonth, 1), equity: 0 });
+    if (data.length === 0) {
+      data.push(0);
+      labels.push('Jan');
+    }
+  } else {
+    const trades = Object.entries(tradesByDate)
+      .map(([date, data]) => ({ date, pl: data.pl || 0 }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    // Calculate cumulative P/L
+    let cumulative = 0;
+    const equityData = trades.map(t => {
+      cumulative += t.pl;
+      return {
+        date: t.date,
+        equity: cumulative
+      };
+    });
+
+    if (equityData.length === 0) {
+      equityData.push({ date: formatDateKey(currentYear, currentMonth, 1), equity: 0 });
+    }
+
+    labels = equityData.map(d => {
+      const [, month, day] = d.date.split('-');
+      return `${month}/${day}`;
+    });
+
+    data = equityData.map(d => d.equity);
   }
-
-  const labels = equityData.map(d => {
-    const [, month, day] = d.date.split('-');
-    return `${month}/${day}`;
-  });
-
-  const data = equityData.map(d => d.equity);
 
   const ctx = document.getElementById('equity-curve').getContext('2d');
 
@@ -586,12 +791,17 @@ function renderEquityCurve() {
         backgroundColor: gradient,
         borderWidth: 2,
         fill: true,
-        tension: 0.4,
+        tension: 0.35,
         pointRadius: 3,
-        pointHoverRadius: 6,
+        pointHoverRadius: 7,
         pointBackgroundColor: lineColor,
         pointBorderColor: '#111',
-        pointBorderWidth: 2
+        pointBorderWidth: 2,
+        animation: {
+          duration: 700,
+          easing: 'easeOutQuart',
+          from: Number.isFinite(data[0]) ? data[0] : 0,
+        }
       }]
     },
     options: {
@@ -610,6 +820,10 @@ function renderEquityCurve() {
           borderWidth: 1,
           padding: 12,
           displayColors: false,
+          animation: {
+            duration: 150,
+            easing: 'easeOutQuart'
+          },
           callbacks: {
             label: function (context) {
               return `P/L: $${context.parsed.y.toFixed(2)}`;
@@ -773,19 +987,31 @@ function toggleView(view) {
   currentView = view;
 
   const calendarContainer = document.getElementById('calendar-container');
+  const yearContainer = document.getElementById('year-container');
   const journalContainer = document.getElementById('journal-container');
   const calendarBtn = document.getElementById('calendar-view-btn');
   const journalBtn = document.getElementById('journal-view-btn');
   const filterControls = document.querySelector('.filter-controls');
 
   if (view === 'calendar') {
-    calendarContainer.classList.remove('hidden');
+    if (calendarMode === 'year') {
+      calendarContainer.classList.add('hidden');
+      yearContainer.classList.remove('hidden');
+      document.getElementById('yearly-stats').classList.remove('hidden');
+      document.getElementById('monthly-stats').classList.add('hidden');
+    } else {
+      calendarContainer.classList.remove('hidden');
+      yearContainer.classList.add('hidden');
+      document.getElementById('yearly-stats').classList.add('hidden');
+      document.getElementById('monthly-stats').classList.remove('hidden');
+    }
     journalContainer.classList.add('hidden');
     calendarBtn.classList.add('active');
     journalBtn.classList.remove('active');
     filterControls.classList.add('hidden');
   } else {
     calendarContainer.classList.add('hidden');
+    yearContainer.classList.add('hidden');
     journalContainer.classList.remove('hidden');
     calendarBtn.classList.remove('active');
     journalBtn.classList.add('active');
@@ -844,6 +1070,72 @@ function setupViewControls() {
       currentReviewIndex++;
       openDayModal(reviewDays[currentReviewIndex]);
     }
+  });
+}
+
+function setCalendarMode(mode) {
+  if (mode === calendarMode) return;
+  calendarMode = mode;
+
+  const monthBtn = document.getElementById('mode-month');
+  const yearBtn = document.getElementById('mode-year');
+  monthBtn.classList.toggle('active', mode === 'month');
+  yearBtn.classList.toggle('active', mode === 'year');
+
+  if (mode === 'year') {
+    document.getElementById('calendar-container').classList.add('hidden');
+    document.getElementById('year-container').classList.remove('hidden');
+    document.getElementById('yearly-stats').classList.remove('hidden');
+    document.getElementById('monthly-stats').classList.add('hidden');
+    document.getElementById('current-month-label').textContent = `${currentYear}`;
+    fetchYearData(currentYear);
+    renderEquityCurve();
+    renderHeaderStatus();
+  } else {
+    document.getElementById('calendar-container').classList.remove('hidden');
+    document.getElementById('year-container').classList.add('hidden');
+    document.getElementById('yearly-stats').classList.add('hidden');
+    document.getElementById('monthly-stats').classList.remove('hidden');
+    renderCalendar();
+    renderEquityCurve();
+    renderHeaderStatus();
+  }
+}
+
+function renderHeaderStatus() {
+  const bar = document.getElementById('header-status');
+  if (!bar) return;
+  bar.classList.remove('hidden');
+
+  const ytdEl = document.getElementById('status-ytd');
+  const mtdEl = document.getElementById('status-mtd');
+
+  ytdEl.textContent = formatPL(ytdPl || 0);
+  ytdEl.className = `status-value ${ytdPl > 0 ? 'positive' : ytdPl < 0 ? 'negative' : ''}`;
+
+  mtdEl.textContent = formatPL(mtdPl || 0);
+  mtdEl.className = `status-value ${mtdPl > 0 ? 'positive' : mtdPl < 0 ? 'negative' : ''}`;
+}
+
+function setupHeaderActions() {
+  const quickAddBtn = document.getElementById('quick-add');
+  if (!quickAddBtn) return;
+
+  quickAddBtn.addEventListener('click', async () => {
+    const today = new Date();
+    currentYear = today.getFullYear();
+    currentMonth = today.getMonth();
+
+    // Ensure we’re in month mode and showing the calendar
+    setCalendarMode('month');
+
+    // Refresh data for the current month
+    await fetchMonthData(currentYear, currentMonth);
+    renderCalendar();
+
+    // Open today’s modal
+    const dateKey = formatDateKey(currentYear, currentMonth, today.getDate());
+    openDayModal(dateKey);
   });
 }
 
@@ -1377,24 +1669,41 @@ function setupModalButtons() {
 
 function setupMonthControls() {
   document.getElementById("prev-month").addEventListener("click", async () => {
-    currentMonth--;
-    if (currentMonth < 0) {
-      currentMonth = 11;
+    if (calendarMode === 'year') {
       currentYear--;
+      document.getElementById('current-month-label').textContent = `${currentYear}`;
+      await fetchYearData(currentYear);
+      renderYearGrid();
+    } else {
+      currentMonth--;
+      if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      await fetchMonthData(currentYear, currentMonth);
+      renderCalendar();
     }
-    await fetchMonthData(currentYear, currentMonth);
-    renderCalendar();
   });
 
   document.getElementById("next-month").addEventListener("click", async () => {
-    currentMonth++;
-    if (currentMonth > 11) {
-      currentMonth = 0;
+    if (calendarMode === 'year') {
       currentYear++;
+      document.getElementById('current-month-label').textContent = `${currentYear}`;
+      await fetchYearData(currentYear);
+      renderYearGrid();
+    } else {
+      currentMonth++;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      }
+      await fetchMonthData(currentYear, currentMonth);
+      renderCalendar();
     }
-    await fetchMonthData(currentYear, currentMonth);
-    renderCalendar();
   });
+
+  document.getElementById('mode-month').addEventListener('click', () => setCalendarMode('month'));
+  document.getElementById('mode-year').addEventListener('click', () => setCalendarMode('year'));
 }
 
 
@@ -1408,17 +1717,20 @@ async function init() {
   setupModalButtons();
   setupMonthControls();
   setupViewControls();
+  setupHeaderActions();
 
   // Load user profile info
   await loadUserInfo();
 
   try {
     await fetchMonthData(currentYear, currentMonth);
+    await fetchYearData(currentYear);
   } catch (err) {
     console.error("Error fetching initial data:", err);
   }
 
   renderCalendar();
+  renderHeaderStatus();
 }
 
 function bootstrapFromUrlToken() {

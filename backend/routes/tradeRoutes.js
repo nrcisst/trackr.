@@ -41,6 +41,35 @@ router.get("/trades", (req, res) => {
     });
 });
 
+// Get monthly aggregates for a specific year (for YTD view)
+router.get("/trades/year", (req, res) => {
+    const { year } = req.query;
+    const userId = req.userId;
+
+    if (!year) {
+        console.error("[GET /api/trades/year] Missing year parameter");
+        return res.status(400).json({ error: "Year is required" });
+    }
+
+    const query = `
+        SELECT 
+            DATE_FORMAT(trade_date, '%Y-%m-01') as month,
+            COALESCE(SUM(pnl), 0) as pl
+        FROM trade_entries
+        WHERE user_id = ? AND YEAR(trade_date) = ?
+        GROUP BY month
+        ORDER BY month
+    `;
+
+    dbClient.all(query, [userId, year], (err, rows) => {
+        if (err) {
+            console.error("[GET /api/trades/year] DB error:", err.message);
+            return res.status(500).json({ error: "Database error retrieving yearly trades" });
+        }
+        res.json({ data: rows });
+    });
+});
+
 router.get("/trades/:date", (req, res) => {
     const dateKey = req.params.date;
     const userId = req.userId;
