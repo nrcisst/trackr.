@@ -909,7 +909,7 @@ function renderCalendar() {
       }
 
       // Add hover tooltip
-      cell.addEventListener('mouseenter', async () => {
+      cell.addEventListener('mouseenter', () => {
         // Remove any existing tooltips first
         document.querySelectorAll('.calendar-tooltip').forEach(t => t.remove());
         
@@ -919,17 +919,8 @@ function renderCalendar() {
         const date = new Date(currentYear, currentMonth, day);
         const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
-        // Fetch trade count
-        let tradeCount = 0;
-        try {
-          const res = await authedFetch(`${apiBase}/entries/${key}`);
-          if (res.ok) {
-            const json = await res.json();
-            tradeCount = json.data ? json.data.length : 0;
-          }
-        } catch (err) {
-          console.error(err);
-        }
+        // Get trade count from cached data
+        const tradeCount = (window.entriesByDate && window.entriesByDate[key]) ? window.entriesByDate[key].length : 0;
 
         const plClass = data.pl > 0 ? 'positive' : data.pl < 0 ? 'negative' : '';
         const plSign = data.pl >= 0 ? '+' : '-';
