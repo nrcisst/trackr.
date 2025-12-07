@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>trackr.</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23000000'/%3E%3Ctext x='50%25' y='52%25' font-family='IBM Plex Mono, monospace' font-size='32' fill='%23ffffff' text-anchor='middle' dominant-baseline='middle'%3Et%3C/text%3E%3C/svg%3E">
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23000000'/%3E%3Ctext x='50%25' y='52%25' font-family='IBM Plex Mono, monospace' font-size='32' fill='%23ffffff' text-anchor='middle' dominant-baseline='middle'%3Et%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -20,24 +21,32 @@
         <input type="email" id="loginEmail" placeholder="Email" />
         <input type="password" id="loginPassword" placeholder="Password" />
         <button onclick="handleLogin()">Login</button>
-        
+
         <div class="oauth-divider">
           <span>or</span>
         </div>
-        
+
         <a href="/auth/google" class="oauth-btn">
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-            <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4"/>
-            <path d="M9.003 18c2.43 0 4.467-.806 5.956-2.18L12.05 13.56c-.806.54-1.836.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.96v2.332C2.44 15.983 5.485 18 9.003 18z" fill="#34A853"/>
-            <path d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.71 0-.593.102-1.17.282-1.71V4.96H.957C.347 6.175 0 7.55 0 9.002c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
-            <path d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.426 0 9.003 0 5.485 0 2.44 2.017.96 4.958L3.967 7.29c.708-2.127 2.692-3.71 5.036-3.71z" fill="#EA4335"/>
+            <path
+              d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"
+              fill="#4285F4" />
+            <path
+              d="M9.003 18c2.43 0 4.467-.806 5.956-2.18L12.05 13.56c-.806.54-1.836.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.96v2.332C2.44 15.983 5.485 18 9.003 18z"
+              fill="#34A853" />
+            <path
+              d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.71 0-.593.102-1.17.282-1.71V4.96H.957C.347 6.175 0 7.55 0 9.002c0 1.452.348 2.827.957 4.042l3.007-2.332z"
+              fill="#FBBC05" />
+            <path
+              d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.426 0 9.003 0 5.485 0 2.44 2.017.96 4.958L3.967 7.29c.708-2.127 2.692-3.71 5.036-3.71z"
+              fill="#EA4335" />
           </svg>
           Sign in with Google
         </a>
-        
+
         <p>Don't have an account? <a href="#" onclick="showRegister(); return false;">Register</a></p>
       </div>
-      
+
       <div id="registerForm" style="display:none">
         <h2>Register</h2>
         <input type="email" id="registerEmail" placeholder="Email" />
@@ -50,315 +59,330 @@
 
   <!-- App Container -->
   <div id="appContainer" style="display:none">
-  <header>
-    <div class="header-left">
-      <h1>trackr.</h1>
-      <div class="mode-toggle header-mode">
-        <button id="mode-month" class="mode-btn active">Monthly</button>
-        <button id="mode-year" class="mode-btn">Yearly</button>
-      </div>
-    </div>
-
-    <div id="userHeader" style="display:none;">
-      <div class="user-info" onclick="toggleProfileDropdown()">
-        <div class="user-avatar" id="headerAvatar">
-          <img id="headerAvatarImg" src="" alt="" style="display:none;">
-          <span id="headerAvatarInitials"></span>
+    <header>
+      <div class="header-left">
+        <h1>trackr.</h1>
+        <div class="mode-toggle header-mode">
+          <button id="mode-month" class="mode-btn active">Monthly</button>
+          <button id="mode-year" class="mode-btn">Yearly</button>
         </div>
-        <span id="headerEmail"></span>
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-          <path d="M6 8L2 4h8z"/>
-        </svg>
+        <button id="theme-toggle" class="theme-btn" title="Toggle dark mode">
+          <span class="theme-icon">◐</span>
+        </button>
       </div>
 
-      <div id="profileDropdown" class="profile-dropdown" style="display:none;">
-        <div class="profile-header">
-          <div class="profile-avatar-large" id="dropdownAvatar">
-            <img id="dropdownAvatarImg" src="" alt="" style="display:none;">
-            <span id="dropdownAvatarInitials"></span>
+      <div id="userHeader" style="display:none;">
+        <div class="user-info" onclick="toggleProfileDropdown()">
+          <div class="user-avatar" id="headerAvatar">
+            <img id="headerAvatarImg" src="" alt="" style="display:none;">
+            <span id="headerAvatarInitials"></span>
           </div>
-          <div class="profile-info">
-            <div id="dropdownUsername" class="profile-username"></div>
-            <div id="dropdownEmail" class="profile-email"></div>
-            <div id="dropdownMemberSince" class="profile-since"></div>
+          <span id="headerEmail"></span>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+            <path d="M6 8L2 4h8z" />
+          </svg>
+        </div>
+
+        <div id="profileDropdown" class="profile-dropdown" style="display:none;">
+          <div class="profile-header">
+            <div class="profile-avatar-large" id="dropdownAvatar">
+              <img id="dropdownAvatarImg" src="" alt="" style="display:none;">
+              <span id="dropdownAvatarInitials"></span>
+            </div>
+            <div class="profile-info">
+              <div id="dropdownUsername" class="profile-username"></div>
+              <div id="dropdownEmail" class="profile-email"></div>
+              <div id="dropdownMemberSince" class="profile-since"></div>
+            </div>
+          </div>
+
+          <div class="profile-actions">
+            <button onclick="showUsernameEdit()" class="profile-btn">Change Username</button>
+            <label for="profileImageInput" class="profile-btn">
+              Change Profile Picture
+            </label>
+            <input type="file" id="profileImageInput" accept="image/*" style="display:none;"
+              onchange="handleProfileImageUpload(event)">
+          </div>
+
+          <div class="profile-settings">
+            <label class="settings-row">
+              <span>Show P/L as %</span>
+              <input type="checkbox" id="pl-format-toggle" onchange="togglePlFormat()">
+            </label>
+            <label class="settings-row" id="account-size-row" style="display: none;">
+              <span>Account Size</span>
+              <input type="number" id="account-size-input" placeholder="e.g. 25000" onchange="saveAccountSize()">
+            </label>
+          </div>
+
+          <div class="profile-divider"></div>
+
+          <button onclick="handleLogout()" class="profile-logout-btn">Logout</button>
+        </div>
+      </div>
+    </header>
+
+    <div id="header-status" class="header-status hidden">
+      <div class="status-pill">
+        <span class="status-label">YTD</span>
+        <span class="status-value" id="status-ytd">$0.00</span>
+      </div>
+      <div class="status-pill">
+        <span class="status-label">MTD</span>
+        <span class="status-value" id="status-mtd">$0.00</span>
+      </div>
+      <button id="quick-add" class="status-action">+ Quick Add</button>
+    </div>
+
+    <div id="month-controls">
+      <button id="prev-month">&larr; Prev</button>
+      <span id="current-month-label">November 2023</span>
+      <button id="next-month">Next &rarr;</button>
+    </div>
+
+    <section id="stats">
+      <div class="stat-card" data-tooltip="Total profit/loss for this period">
+        <div class="stat-label">Net P/L</div>
+        <div class="stat-value" id="stat-net-pl">$0.00</div>
+      </div>
+      <div class="stat-card" data-tooltip="Percentage of winning trades">
+        <div class="stat-label">Win Rate</div>
+        <div class="stat-value" id="stat-win-rate">0%</div>
+      </div>
+      <div class="stat-card" data-tooltip="Gross profit ÷ gross loss (>1 is profitable)">
+        <div class="stat-label">Profit Factor</div>
+        <div class="stat-value" id="stat-profit-factor">0.00</div>
+      </div>
+      <div class="stat-card" data-tooltip="Biggest single winning trade">
+        <div class="stat-label">Max Win</div>
+        <div class="stat-value positive" id="stat-max-win">$0.00</div>
+      </div>
+      <div class="stat-card" data-tooltip="Biggest single losing trade">
+        <div class="stat-label">Max Loss</div>
+        <div class="stat-value negative" id="stat-max-loss">$0.00</div>
+      </div>
+    </section>
+
+    <!-- Monthly Stats (flows inline with top stats) -->
+    <section id="monthly-stats">
+      <div class="monthly-stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Monthly P/L</div>
+          <div class="stat-value" id="monthly-pl">$0.00</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Trading Days</div>
+          <div class="stat-value" id="monthly-trading-days">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg Green Day</div>
+          <div class="stat-value positive" id="monthly-avg-green">$0.00</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg Red Day</div>
+          <div class="stat-value negative" id="monthly-avg-red">$0.00</div>
+        </div>
+      </div>
+    </section>
+
+
+    <section id="yearly-stats" class="hidden">
+      <h2 class="section-title">Year to Date</h2>
+      <div class="monthly-stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">YTD P/L</div>
+          <div class="stat-value" id="ytd-pl">$0.00</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Green Months</div>
+          <div class="stat-value positive" id="ytd-green-months">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Red Months</div>
+          <div class="stat-value negative" id="ytd-red-months">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Best Month</div>
+          <div class="stat-value positive" id="ytd-best-month">$0.00</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Worst Month</div>
+          <div class="stat-value negative" id="ytd-worst-month">$0.00</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Equity Curve -->
+    <section id="equity-curve-section">
+      <h2 class="section-title">Equity Curve</h2>
+      <div class="chart-container">
+        <canvas id="equity-curve"></canvas>
+      </div>
+    </section>
+
+    <!-- View Toggle & Filters -->
+    <section id="view-controls">
+      <div class="view-toggle">
+        <button id="calendar-view-btn" class="view-btn active">Calendar</button>
+        <button id="journal-view-btn" class="view-btn">Journal</button>
+      </div>
+
+      <div class="filter-controls hidden">
+        <input type="text" id="filter-ticker" class="filter-input" placeholder="Filter by ticker...">
+
+        <select id="filter-day-type" class="filter-select">
+          <option value="all">All Days</option>
+          <option value="green">Green Days Only</option>
+          <option value="red">Red Days Only</option>
+        </select>
+
+        <select id="sort-by" class="filter-select">
+          <option value="date">Sort by Date</option>
+          <option value="pl-high">Highest P/L</option>
+          <option value="pl-low">Lowest P/L</option>
+          <option value="trades">Most Trades</option>
+        </select>
+
+        <button id="review-mode-btn" class="view-btn">Review Mode</button>
+      </div>
+    </section>
+
+    <main>
+      <!-- Calendar View -->
+      <div id="calendar-container">
+        <div id="calendar"></div>
+      </div>
+
+      <!-- Yearly View -->
+      <div id="year-container" class="hidden">
+        <div id="year-grid"></div>
+      </div>
+
+      <!-- Journal View -->
+      <div id="journal-container" class="hidden">
+        <div id="journal-list"></div>
+      </div>
+    </main>
+
+    <!-- Day detail panel -->
+    <div id="day-modal" class="hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="modal-date-label">Date</h2>
+          <div id="review-nav" class="review-navigation hidden">
+            <button id="prev-day-btn" class="nav-btn">&larr; Prev</button>
+            <span id="review-position">Day 1 of 10</span>
+            <button id="next-day-btn" class="nav-btn">Next &rarr;</button>
           </div>
         </div>
 
-        <div class="profile-actions">
-          <button onclick="showUsernameEdit()" class="profile-btn">Change Username</button>
-          <label for="profileImageInput" class="profile-btn">
-            Change Profile Picture
-          </label>
-          <input type="file" id="profileImageInput" accept="image/*" style="display:none;" onchange="handleProfileImageUpload(event)">
+        <!-- Daily Summary Section -->
+        <div id="daily-summary" class="daily-summary-grid">
+          <div class="summary-card">
+            <span class="summary-label">Net P/L</span>
+            <span id="summary-net-pl" class="summary-value">$0.00</span>
+          </div>
+          <div class="summary-card">
+            <span class="summary-label">Trades</span>
+            <span id="summary-trades" class="summary-value">0</span>
+          </div>
+          <div class="summary-card">
+            <span class="summary-label">Best Trade</span>
+            <span id="summary-best" class="summary-value positive">$0.00</span>
+          </div>
+          <div class="summary-card">
+            <span class="summary-label">Worst Trade</span>
+            <span id="summary-worst" class="summary-value negative">$0.00</span>
+          </div>
+          <div class="summary-card">
+            <span class="summary-label">Profit Factor</span>
+            <span id="summary-pf" class="summary-value">0.00</span>
+          </div>
         </div>
 
-        <div class="profile-divider"></div>
+        <label style="margin-top: 1rem; display: block;">Notes</label>
+        <textarea id="notes-input" rows="3" placeholder="Day notes..."></textarea>
 
-        <button onclick="handleLogout()" class="profile-logout-btn">Logout</button>
-      </div>
-    </div>
-  </header>
+        <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 1.5rem 0;">
 
-  <div id="header-status" class="header-status hidden">
-    <div class="status-pill">
-      <span class="status-label">YTD</span>
-      <span class="status-value" id="status-ytd">$0.00</span>
-    </div>
-    <div class="status-pill">
-      <span class="status-label">MTD</span>
-      <span class="status-value" id="status-mtd">$0.00</span>
-    </div>
-    <button id="quick-add" class="status-action">+ Quick Add</button>
-  </div>
-
-  <div id="month-controls">
-    <button id="prev-month">&larr; Prev</button>
-    <span id="current-month-label">November 2023</span>
-    <button id="next-month">Next &rarr;</button>
-  </div>
-
-  <section id="stats">
-    <div class="stat-card">
-      <div class="stat-label">Net P/L</div>
-      <div class="stat-value" id="stat-net-pl">$0.00</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Win Rate</div>
-      <div class="stat-value" id="stat-win-rate">0%</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Profit Factor</div>
-      <div class="stat-value" id="stat-profit-factor">0.00</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Max Win</div>
-      <div class="stat-value positive" id="stat-max-win">$0.00</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-label">Max Loss</div>
-      <div class="stat-value negative" id="stat-max-loss">$0.00</div>
-    </div>
-  </section>
-
-  <!-- Monthly Stats (flows inline with top stats) -->
-  <section id="monthly-stats">
-    <div class="monthly-stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">Monthly P/L</div>
-        <div class="stat-value" id="monthly-pl">$0.00</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Trading Days</div>
-        <div class="stat-value" id="monthly-trading-days">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Avg Green Day</div>
-        <div class="stat-value positive" id="monthly-avg-green">$0.00</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Avg Red Day</div>
-        <div class="stat-value negative" id="monthly-avg-red">$0.00</div>
-      </div>
-    </div>
-  </section>
-
-
-  <section id="yearly-stats" class="hidden">
-    <h2 class="section-title">Year to Date</h2>
-    <div class="monthly-stats-grid">
-      <div class="stat-card">
-        <div class="stat-label">YTD P/L</div>
-        <div class="stat-value" id="ytd-pl">$0.00</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Green Months</div>
-        <div class="stat-value positive" id="ytd-green-months">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Red Months</div>
-        <div class="stat-value negative" id="ytd-red-months">0</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Best Month</div>
-        <div class="stat-value positive" id="ytd-best-month">$0.00</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-label">Worst Month</div>
-        <div class="stat-value negative" id="ytd-worst-month">$0.00</div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Equity Curve -->
-  <section id="equity-curve-section">
-    <h2 class="section-title">Equity Curve</h2>
-    <div class="chart-container">
-      <canvas id="equity-curve"></canvas>
-    </div>
-  </section>
-
-  <!-- View Toggle & Filters -->
-  <section id="view-controls">
-    <div class="view-toggle">
-      <button id="calendar-view-btn" class="view-btn active">Calendar</button>
-      <button id="journal-view-btn" class="view-btn">Journal</button>
-    </div>
-
-    <div class="filter-controls hidden">
-      <input type="text" id="filter-ticker" class="filter-input" placeholder="Filter by ticker...">
-      
-      <select id="filter-day-type" class="filter-select">
-        <option value="all">All Days</option>
-        <option value="green">Green Days Only</option>
-        <option value="red">Red Days Only</option>
-      </select>
-
-      <select id="sort-by" class="filter-select">
-        <option value="date">Sort by Date</option>
-        <option value="pl-high">Highest P/L</option>
-        <option value="pl-low">Lowest P/L</option>
-        <option value="trades">Most Trades</option>
-      </select>
-      
-      <button id="review-mode-btn" class="view-btn">Review Mode</button>
-    </div>
-  </section>
-
-  <main>
-    <!-- Calendar View -->
-    <div id="calendar-container">
-      <div id="calendar"></div>
-    </div>
-
-    <!-- Yearly View -->
-    <div id="year-container" class="hidden">
-      <div id="year-grid"></div>
-    </div>
-
-    <!-- Journal View -->
-    <div id="journal-container" class="hidden">
-      <div id="journal-list"></div>
-    </div>
-  </main>
-
-  <!-- Day detail panel -->
-  <div id="day-modal" class="hidden">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h2 id="modal-date-label">Date</h2>
-        <div id="review-nav" class="review-navigation hidden">
-          <button id="prev-day-btn" class="nav-btn">&larr; Prev</button>
-          <span id="review-position">Day 1 of 10</span>
-          <button id="next-day-btn" class="nav-btn">Next &rarr;</button>
-        </div>
-      </div>
-
-      <!-- Daily Summary Section -->
-      <div id="daily-summary" class="daily-summary-grid">
-        <div class="summary-card">
-          <span class="summary-label">Net P/L</span>
-          <span id="summary-net-pl" class="summary-value">$0.00</span>
-        </div>
-        <div class="summary-card">
-          <span class="summary-label">Trades</span>
-          <span id="summary-trades" class="summary-value">0</span>
-        </div>
-        <div class="summary-card">
-          <span class="summary-label">Best Trade</span>
-          <span id="summary-best" class="summary-value positive">$0.00</span>
-        </div>
-        <div class="summary-card">
-          <span class="summary-label">Worst Trade</span>
-          <span id="summary-worst" class="summary-value negative">$0.00</span>
-        </div>
-        <div class="summary-card">
-          <span class="summary-label">Profit Factor</span>
-          <span id="summary-pf" class="summary-value">0.00</span>
-        </div>
-      </div>
-
-      <label style="margin-top: 1rem; display: block;">Notes</label>
-      <textarea id="notes-input" rows="3" placeholder="Day notes..."></textarea>
-
-      <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 1.5rem 0;">
-
-      <!-- Trade Entries -->
-      <h3>Trades</h3>
-      <div id="trade-entries-list">
-        <!-- Entries will be injected here -->
-      </div>
-
-      <div class="add-trade-form">
-        <h4>Add Trade</h4>
-
-        <!-- Row 1: Core Data -->
-        <div class="form-row">
-          <input type="text" id="entry-ticker" placeholder="Ticker (e.g. AAPL)" autofocus />
-          <select id="entry-direction">
-            <option value="LONG">Long</option>
-            <option value="SHORT">Short</option>
-          </select>
-          <input type="number" id="entry-pl" placeholder="P/L" />
+        <!-- Trade Entries -->
+        <h3>Trades</h3>
+        <div id="trade-entries-list">
+          <!-- Entries will be injected here -->
         </div>
 
-        <!-- Row 2: Optional Data -->
-        <div class="form-row optional-fields">
-          <select id="entry-tag">
-            <option value="">Tag</option>
-            <option value="Breakout">Breakout</option>
-            <option value="Pullback">Pullback</option>
-            <option value="Reversal">Reversal</option>
-            <option value="Scalp">Scalp</option>
-            <option value="Swing">Swing</option>
-          </select>
+        <div class="add-trade-form">
+          <h4>Add Trade</h4>
 
-          <select id="entry-confidence">
-            <option value="">Conf</option>
-            <option value="1">1/5</option>
-            <option value="2">2/5</option>
-            <option value="3">3/5</option>
-            <option value="4">4/5</option>
-            <option value="5">5/5</option>
-          </select>
+          <!-- Row 1: Core Data -->
+          <div class="form-row">
+            <input type="text" id="entry-ticker" placeholder="Ticker (e.g. AAPL)" autofocus />
+            <select id="entry-direction">
+              <option value="LONG">Long</option>
+              <option value="SHORT">Short</option>
+            </select>
+            <input type="number" id="entry-pl" placeholder="P/L" />
+          </div>
 
-          <select id="entry-quality">
-            <option value="">Grade</option>
-            <option value="A">A Setup</option>
-            <option value="B">B Setup</option>
-            <option value="C">C Setup</option>
-          </select>
+          <!-- Row 2: Optional Data -->
+          <div class="form-row optional-fields">
+            <select id="entry-tag">
+              <option value="">Tag</option>
+              <option value="Breakout">Breakout</option>
+              <option value="Pullback">Pullback</option>
+              <option value="Reversal">Reversal</option>
+              <option value="Scalp">Scalp</option>
+              <option value="Swing">Swing</option>
+            </select>
 
-          <button id="add-trade-btn">Add</button>
+            <select id="entry-confidence">
+              <option value="">Conf</option>
+              <option value="1">1/5</option>
+              <option value="2">2/5</option>
+              <option value="3">3/5</option>
+              <option value="4">4/5</option>
+              <option value="5">5/5</option>
+            </select>
+
+            <select id="entry-quality">
+              <option value="">Grade</option>
+              <option value="A">A Setup</option>
+              <option value="B">B Setup</option>
+              <option value="C">C Setup</option>
+            </select>
+
+            <button id="add-trade-btn">Add</button>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button id="close-modal">Close</button>
+          <button id="save-day">Save Summary</button>
         </div>
       </div>
+    </div>
 
-      <div class="modal-actions">
-        <button id="close-modal">Close</button>
-        <button id="save-day">Save Summary</button>
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="hidden">
+      <div class="confirm-overlay"></div>
+      <div class="confirm-dialog">
+        <h3 id="confirm-title">Confirm Action</h3>
+        <p id="confirm-message">Are you sure?</p>
+        <div class="confirm-actions">
+          <button id="confirm-cancel" class="btn-secondary">Cancel</button>
+          <button id="confirm-ok" class="btn-danger">Delete</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Confirmation Modal -->
-  <div id="confirm-modal" class="hidden">
-    <div class="confirm-overlay"></div>
-    <div class="confirm-dialog">
-      <h3 id="confirm-title">Confirm Action</h3>
-      <p id="confirm-message">Are you sure?</p>
-      <div class="confirm-actions">
-        <button id="confirm-cancel" class="btn-secondary">Cancel</button>
-        <button id="confirm-ok" class="btn-danger">Delete</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- SVG Filter for Glow Effect -->
-  <svg class="sr-only" style="position: absolute; width: 0; height: 0; overflow: hidden;"
-    xmlns="http://www.w3.org/2000/svg">
-    <filter id="blur" width="500%" height="500%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="20" />
-    </filter>
-  </svg>
+    <!-- SVG Filter for Glow Effect -->
+    <svg class="sr-only" style="position: absolute; width: 0; height: 0; overflow: hidden;"
+      xmlns="http://www.w3.org/2000/svg">
+      <filter id="blur" width="500%" height="500%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="20" />
+      </filter>
+    </svg>
 
   </div> <!-- End appContainer -->
 

@@ -12,6 +12,31 @@ function clearToken() {
   localStorage.removeItem('token');
 }
 
+// ---- Theme Management ----
+
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  if (savedTheme === 'light') {
+    document.body.classList.add('theme-light');
+  }
+  updateThemeIcon();
+}
+
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('theme-light');
+  localStorage.setItem('theme', isLight ? 'light' : 'dark');
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const icon = document.querySelector('.theme-icon');
+  if (icon) {
+    const isLight = document.body.classList.contains('theme-light');
+    icon.textContent = isLight ? '☀' : '◐';
+  }
+}
+
+
 async function authedFetch(url, options = {}) {
   const token = getToken();
   if (!token) {
@@ -406,15 +431,83 @@ function removeAllTooltips() {
   document.querySelectorAll('.calendar-tooltip').forEach(t => t.remove());
 }
 
+// ---- P/L Formatting ----
+
+function getPlFormat() {
+  return localStorage.getItem('plFormat') || 'dollar';
+}
+
+function getAccountSize() {
+  return parseFloat(localStorage.getItem('accountSize')) || 0;
+}
+
 function formatPL(value) {
   if (typeof value !== 'number' || isNaN(value)) return '$0.00';
 
+  const plFormat = getPlFormat();
+  const accountSize = getAccountSize();
+
+  // Percentage format
+  if (plFormat === 'percent' && accountSize > 0) {
+    const percent = (value / accountSize) * 100;
+    if (value === 0) return '0.00%';
+    if (value > 0) return `+${percent.toFixed(2)}%`;
+    return `${percent.toFixed(2)}%`;
+  }
+
+  // Dollar format (default)
   const absValue = Math.abs(value).toFixed(2);
   const formatted = Number(absValue).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   if (value === 0) return '$0.00';
   if (value > 0) return `+$${formatted}`;
   return `-$${formatted}`;
+}
+
+window.togglePlFormat = function () {
+  const toggle = document.getElementById('pl-format-toggle');
+  const accountRow = document.getElementById('account-size-row');
+
+  if (toggle.checked) {
+    localStorage.setItem('plFormat', 'percent');
+    accountRow.style.display = 'flex';
+  } else {
+    localStorage.setItem('plFormat', 'dollar');
+    accountRow.style.display = 'none';
+  }
+
+  // Refresh display
+  if (typeof refreshAppData === 'function') {
+    refreshAppData();
+  }
+};
+
+window.saveAccountSize = function () {
+  const input = document.getElementById('account-size-input');
+  const size = parseFloat(input.value) || 0;
+  localStorage.setItem('accountSize', size);
+
+  // Refresh display
+  if (typeof refreshAppData === 'function') {
+    refreshAppData();
+  }
+};
+
+function initPlSettings() {
+  const toggle = document.getElementById('pl-format-toggle');
+  const accountRow = document.getElementById('account-size-row');
+  const accountInput = document.getElementById('account-size-input');
+
+  if (toggle) {
+    const isPercent = getPlFormat() === 'percent';
+    toggle.checked = isPercent;
+    if (accountRow) accountRow.style.display = isPercent ? 'flex' : 'none';
+  }
+
+  if (accountInput) {
+    const savedSize = getAccountSize();
+    if (savedSize > 0) accountInput.value = savedSize;
+  }
 }
 
 function formatDateKey(year, month, day) {
@@ -1234,6 +1327,14 @@ function renderCalendar() {
     const cell = document.createElement("div");
     cell.className = "day-cell";
 
+    // Check if this is today
+    const today = new Date();
+    if (currentYear === today.getFullYear() &&
+      currentMonth === today.getMonth() &&
+      day === today.getDate()) {
+      cell.classList.add("today");
+    }
+
     const contentContainer = document.createElement("div");
     contentContainer.className = "cell-content";
 
@@ -1489,7 +1590,10 @@ function renderEntries(entries) {
 
     // Optional fields badges
     let badges = '';
-    if (entry.tag) badges += `<span class="trade-badge tag">${entry.tag}</span>`;
+    if (entry.tag) {
+      const tagClass = `tag-${entry.tag.toLowerCase()}`;
+      badges += `<span class="trade-badge ${tagClass}">${entry.tag}</span>`;
+    }
     if (entry.setup_quality) badges += `<span class="trade-badge quality-${entry.setup_quality.toLowerCase()}">Grade ${entry.setup_quality}</span>`;
     if (entry.confidence) badges += `<span class="trade-badge confidence">Conf: ${entry.confidence}/5</span>`;
 
@@ -1823,6 +1927,7 @@ async function init() {
   setupMonthControls();
   setupViewControls();
   setupHeaderActions();
+  initPlSettings();
 
   // Load user profile info
   await loadUserInfo();
@@ -1860,6 +1965,15 @@ function bootstrapFromUrlToken() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Initialize theme
+  initTheme();
+
+  // Theme toggle button
+  const themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', toggleTheme);
+  }
+
   // Check for OAuth token in URL first
   if (bootstrapFromUrlToken()) {
     return;
