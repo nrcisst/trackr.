@@ -533,33 +533,46 @@ async function fetchYearData(year) {
 
 
 function calculateAndRenderMonthlyStats() {
+
   const trades = Object.values(tradesByDate);
   let netPl = 0;
-  let wins = 0;
-  let losses = 0;
   let grossProfit = 0;
   let grossLoss = 0;
   let maxWin = 0;
   let maxLoss = 0;
 
+  // Calculate Net P/L and highs/lows from daily aggregates (still valid for P/L)
   trades.forEach(t => {
     if (typeof t.pl === 'number') {
       netPl += t.pl;
       if (t.pl > 0) {
-        wins++;
-        grossProfit += t.pl;
         if (t.pl > maxWin) maxWin = t.pl;
       } else if (t.pl < 0) {
-        losses++;
-        grossLoss += Math.abs(t.pl);
         if (t.pl < maxLoss) maxLoss = t.pl;
       }
     }
   });
 
-  const totalTrades = wins + losses;
-  const winRate = totalTrades > 0 ? Math.round((wins / totalTrades) * 100) : 0;
+  // Calculate Win Rate & Profit Factor based on INDIVIDUAL TRADES
+  const allEntries = Object.values(window.entriesByDate || {}).flat();
+
+  let entryWins = 0;
+  let entryLosses = 0;
+
+  allEntries.forEach(e => {
+    if (e.pnl > 0) {
+      entryWins++;
+      grossProfit += e.pnl; // Recalculate gross profit from entries for accuracy
+    } else if (e.pnl < 0) {
+      entryLosses++;
+      grossLoss += Math.abs(e.pnl); // Recalculate gross loss from entries
+    }
+  });
+
+  const totalTrades = entryWins + entryLosses;
+  const winRate = totalTrades > 0 ? Math.round((entryWins / totalTrades) * 100) : 0;
   const profitFactor = grossLoss > 0 ? (grossProfit / grossLoss).toFixed(2) : grossProfit > 0 ? "∞" : "0.00";
+
 
   renderStatsUI({
     netPl,
@@ -1342,7 +1355,17 @@ async function openDayModal(dateKey) {
     const existing = await fetchDay(dateKey);
     if (existing) {
       notesInput.value = existing.notes ?? "";
+      // Auto-resize
+      notesInput.style.height = 'auto';
+      notesInput.style.height = (notesInput.scrollHeight) + 'px';
     }
+
+    // Auto-resize listener
+    notesInput.oninput = function () {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    };
+
 
     // Fetch and render entries
     await fetchAndRenderEntries(dateKey);

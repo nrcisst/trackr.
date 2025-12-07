@@ -101,14 +101,14 @@ router.get("/trades/year/stats", (req, res) => {
 
         // Format response
         const stats = {
-            total_trades: row.total_trades || 0,
-            wins: row.wins || 0,
-            losses: row.losses || 0,
-            gross_profit: row.gross_profit || 0,
-            gross_loss: row.gross_loss || 0,
-            max_win: row.max_win || 0,
-            max_loss: row.max_loss || 0,
-            net_pl: row.net_pl || 0
+            total_trades: Number(row.total_trades) || 0,
+            wins: Number(row.wins) || 0,
+            losses: Number(row.losses) || 0,
+            gross_profit: Number(row.gross_profit) || 0,
+            gross_loss: Number(row.gross_loss) || 0,
+            max_win: Number(row.max_win) || 0,
+            max_loss: Number(row.max_loss) || 0,
+            net_pl: Number(row.net_pl) || 0
         };
 
         res.json({ data: stats });
