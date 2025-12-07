@@ -1591,6 +1591,31 @@ function closeDayModal() {
   modal.classList.add("hidden");
 }
 
+
+// Centralized refresh function
+async function refreshAppData() {
+  // Always fetch year data to update YTD and Grid
+  await fetchYearData(currentYear);
+
+  // If in month view, refetch month data
+  if (calendarMode === 'month') {
+    await fetchMonthData(currentYear, currentMonth); // This calls calculateAndRenderMonthlyStats
+    renderCalendar();
+  } else {
+    // In year mode, refresh year stats
+    await fetchAndRenderYearStats(currentYear);
+    renderYearGrid();
+  }
+
+  // Update Header Status (YTD/MTD)
+  renderHeaderStatus();
+
+  // If journal view is active, it needs to re-render potentially
+  if (currentView === 'journal') {
+    renderJournalView();
+  }
+}
+
 function setupModalButtons() {
   // Close buttons
   document.getElementById("close-modal").addEventListener("click", closeDayModal);
@@ -1619,29 +1644,6 @@ function setupModalButtons() {
     }
   });
 
-  // Centralized refresh function
-  async function refreshAppData() {
-    // Always fetch year data to update YTD and Grid
-    await fetchYearData(currentYear);
-
-    // If in month view, refetch month data
-    if (calendarMode === 'month') {
-      await fetchMonthData(currentYear, currentMonth); // This calls calculateAndRenderMonthlyStats
-      renderCalendar();
-    } else {
-      // In year mode, refresh year stats
-      await fetchAndRenderYearStats(currentYear);
-      renderYearGrid();
-    }
-
-    // Update Header Status (YTD/MTD)
-    renderHeaderStatus();
-
-    // If journal view is active, it needs to re-render potentially
-    if (currentView === 'journal') {
-      renderJournalView();
-    }
-  }
 
   // Add Trade Entry
   const addBtn = document.getElementById("add-trade-btn");
