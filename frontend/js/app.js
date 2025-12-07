@@ -781,6 +781,9 @@ function renderEquityCurve() {
   let labels = [];
   let data = [];
 
+  // Track if this is the first render (for animation control)
+  const isFirstRender = !equityCurveChart;
+
   if (calendarMode === 'year') {
     // Use monthly aggregates for current year
     let cumulative = 0;
@@ -832,8 +835,8 @@ function renderEquityCurve() {
 
   // Determine line color based on final equity
   const finalEquity = data[data.length - 1] || 0;
-  const lineColor = finalEquity >= 0 ? 'rgba(28, 183, 85, 1)' : 'rgba(200, 34, 34, 1)';
-  const gradientColor = finalEquity >= 0 ? 'rgba(28, 183, 85, 0.2)' : 'rgba(200, 34, 34, 0.2)';
+  const lineColor = finalEquity >= 0 ? 'rgba(52, 211, 153, 1)' : 'rgba(248, 113, 113, 1)';
+  const gradientColor = finalEquity >= 0 ? 'rgba(52, 211, 153, 0.15)' : 'rgba(248, 113, 113, 0.15)';
 
   // Create gradient
   const gradient = ctx.createLinearGradient(0, 0, 0, 300);
@@ -855,19 +858,18 @@ function renderEquityCurve() {
         pointRadius: 3,
         pointHoverRadius: 7,
         pointBackgroundColor: lineColor,
-        pointBorderColor: '#111',
+        pointBorderColor: '#000',
         pointBorderWidth: 2,
-        animation: {
-          duration: 700,
-          easing: 'easeOutQuart',
-          from: Number.isFinite(data[0]) ? data[0] : 0,
-        }
       }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: true,
       aspectRatio: 2.5,
+      animation: isFirstRender ? {
+        duration: 600,
+        easing: 'easeOutQuart'
+      } : false, // No animation on subsequent renders
       plugins: {
         legend: {
           display: false
