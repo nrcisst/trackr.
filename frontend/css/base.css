@@ -1,0 +1,286 @@
+/* ==========================================================================
+   BASE.CSS - Variables, Reset, Themes, Typography
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+:root {
+    /* -- Enhanced Depth System (4 shades with HSL increments) -- */
+    --bg-app: hsl(0, 0%, 0%);
+    --bg-surface-1: hsl(0, 0%, 5%);
+    --bg-surface-2: hsl(0, 0%, 8%);
+    --bg-surface-3: hsl(0, 0%, 12%);
+    --bg-surface-hover: hsl(0, 0%, 14%);
+
+    /* -- Borders & Effects (HSL for intuitive adjustments) -- */
+    --border-subtle: hsl(0 0% 100% / 0.06);
+    --border-medium: hsl(0 0% 100% / 0.12);
+    --border-focus: hsl(0 0% 100% / 0.25);
+    --border-highlight: hsl(0 0% 100% / 0.15);
+    --glass-blur: blur(40px);
+
+    /* -- Premium Shadow System (HSL format) -- */
+    --shadow-sm:
+        0 2px 4px hsl(0 0% 0% / 0.3),
+        0 4px 8px hsl(0 0% 0% / 0.2);
+    --shadow-md:
+        0 4px 8px hsl(0 0% 0% / 0.4),
+        0 8px 24px hsl(0 0% 0% / 0.3);
+    --shadow-lg:
+        0 8px 16px hsl(0 0% 0% / 0.4),
+        0 24px 48px hsl(0 0% 0% / 0.4);
+    --shadow-xl:
+        0 12px 24px hsl(0 0% 0% / 0.5),
+        0 40px 80px hsl(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 40px hsl(0 0% 100% / 0.03);
+
+    /* -- Inner Highlight (light from top effect) -- */
+    --highlight-top: inset 0 1px 0 hsl(0 0% 100% / 0.08);
+    --highlight-strong: inset 0 1px 1px hsl(0 0% 100% / 0.12);
+
+    /* -- Sunken Effect (for inputs/recessed elements) -- */
+    --shadow-inset: inset 0 2px 4px hsl(0 0% 0% / 0.3);
+
+    /* -- Type & Color -- */
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+
+    --text-primary: hsl(0, 0%, 100%);
+    --text-secondary: hsl(0, 0%, 70%);
+    --text-tertiary: hsl(0, 0%, 45%);
+
+    --color-accent: hsl(0 0% 100%);
+    --color-success: hsl(160 65% 52%);
+    --color-danger: hsl(0 91% 71%);
+
+    /* -- Sizing -- */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 20px;
+    --radius-xl: 28px;
+
+    /* -- Spacing -- */
+    --space-xs: 0.5rem;
+    --space-sm: 1rem;
+    --space-md: 1.5rem;
+    --space-lg: 2.5rem;
+    --space-xl: 4rem;
+
+    /* -- Legacy mappings -- */
+    --bg-color: var(--bg-app);
+    --card-bg: var(--bg-surface-1);
+    --card-shadow: var(--shadow-lg);
+    --positive-color: var(--color-success);
+    --negative-color: var(--color-danger);
+    --text-muted: var(--text-tertiary);
+    --accent-color: var(--color-accent);
+
+    /* -- Missing legacy variables -- */
+    --border-color: var(--border-subtle);
+    --primary-color: var(--color-accent);
+    --primary-hover: hsl(0 0% 90%);
+    --input-bg: var(--bg-surface-1);
+    --hover-bg: var(--bg-surface-hover);
+    --text-color: var(--text-primary);
+}
+
+/* Light Theme */
+body.theme-light {
+    --bg-app: hsl(0, 0%, 96%);
+    --bg-surface-1: hsl(0, 0%, 100%);
+    --bg-surface-2: hsl(0, 0%, 98%);
+    --bg-surface-3: hsl(0, 0%, 95%);
+    --bg-surface-hover: hsl(0, 0%, 97%);
+    --border-subtle: hsl(0 0% 0% / 0.08);
+    --border-medium: hsl(0 0% 0% / 0.15);
+    --border-focus: hsl(0 0% 0% / 0.3);
+    --border-highlight: hsl(0 0% 100% / 0.8);
+    --text-primary: hsl(0, 0%, 10%);
+    --text-secondary: hsl(0, 0%, 35%);
+    --text-tertiary: hsl(0, 0%, 50%);
+    --shadow-sm:
+        0 1px 2px hsl(0 0% 0% / 0.05),
+        0 2px 4px hsl(0 0% 0% / 0.03);
+    --shadow-md:
+        0 2px 4px hsl(0 0% 0% / 0.08),
+        0 4px 12px hsl(0 0% 0% / 0.06);
+    --shadow-lg:
+        0 4px 8px hsl(0 0% 0% / 0.08),
+        0 12px 32px hsl(0 0% 0% / 0.1);
+    --shadow-xl:
+        0 8px 16px hsl(0 0% 0% / 0.1),
+        0 24px 48px hsl(0 0% 0% / 0.12);
+    --shadow-glow: none;
+    --highlight-top: inset 0 1px 0 hsl(0 0% 100% / 0.9);
+    --highlight-strong: inset 0 1px 2px hsl(0 0% 100% / 1);
+    --shadow-inset: inset 0 1px 3px hsl(0 0% 0% / 0.08);
+}
+
+/* Light mode element overrides */
+body.theme-light header,
+body.theme-light .stat-card,
+body.theme-light .chart-container,
+body.theme-light .day-cell,
+body.theme-light .year-cell,
+body.theme-light .journal-entry,
+body.theme-light .modal-content,
+body.theme-light .add-trade-form,
+body.theme-light .trade-entry-item,
+body.theme-light input,
+body.theme-light select,
+body.theme-light textarea {
+    border: 1px solid hsl(0 0% 0% / 0.15) !important;
+}
+
+body.theme-light button {
+    background: hsl(0 0% 7%);
+    color: hsl(0 0% 100%);
+    border: 1px solid hsl(0 0% 0%) !important;
+}
+
+body.theme-light button:hover {
+    background: hsl(0 0% 0%);
+    box-shadow: 0 8px 25px hsl(0 0% 0% / 0.2);
+}
+
+body.theme-light .mode-btn,
+body.theme-light .view-btn,
+body.theme-light .theme-btn {
+    background: transparent;
+    color: var(--text-secondary);
+    border: 1px solid hsl(0 0% 0% / 0.1) !important;
+}
+
+body.theme-light .mode-btn.active,
+body.theme-light .view-btn.active {
+    background: hsl(0 0% 0% / 0.08);
+    color: var(--text-primary);
+}
+
+body.theme-light .mode-btn:hover,
+body.theme-light .view-btn:hover {
+    background: hsl(0 0% 0% / 0.08);
+    color: var(--text-primary);
+}
+
+body.theme-light .confirm-overlay {
+    background: hsl(0 0% 0% / 0.4);
+}
+
+body.theme-light .confirm-dialog {
+    background: hsl(0 0% 100% / 0.98);
+    border: 1px solid hsl(0 0% 0% / 0.15);
+    box-shadow: 0 20px 60px hsl(0 0% 0% / 0.2);
+}
+
+/* Reset */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-sans);
+    margin: 0;
+    padding: var(--space-lg) var(--space-xl);
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Atmospheric Background */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+        radial-gradient(ellipse 80% 50% at 20% 10%, hsl(160 65% 52% / 0.03), transparent),
+        radial-gradient(ellipse 60% 40% at 80% 90%, hsl(0 91% 71% / 0.02), transparent),
+        radial-gradient(circle at 50% 50%, hsl(0 0% 100% / 0.01), transparent 70%);
+    pointer-events: none;
+    z-index: -2;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.015'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.6;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* Skeleton Loading */
+.skeleton {
+    background: linear-gradient(90deg,
+            var(--bg-surface-1) 25%,
+            var(--bg-surface-2) 50%,
+            var(--bg-surface-1) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: var(--radius-md);
+}
+
+.skeleton-card {
+    height: 80px;
+    margin-bottom: var(--space-sm);
+}
+
+.skeleton-text {
+    height: 1rem;
+    width: 60%;
+    margin-bottom: 0.5rem;
+}
+
+.skeleton-text.short {
+    width: 40%;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Empty State */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-xl) var(--space-lg);
+    text-align: center;
+    min-height: 300px;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: var(--space-md);
+    opacity: 0.3;
+}
+
+.empty-state-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xs);
+}
+
+.empty-state-message {
+    font-size: 0.95rem;
+    color: var(--text-tertiary);
+    max-width: 300px;
+}
