@@ -3,9 +3,7 @@ const router = express.Router();
 const passport = require('../oauth');
 const jwt = require('jsonwebtoken');
 const { register, login } = require('../auth');
-const { requireEnv } = require('../config');
-
-const JWT_SECRET = requireEnv('JWT_SECRET', 'dev-secret-change-in-production');
+const { JWT_SECRET } = require('../config');
 
 // Public Auth Routes
 router.post('/api/auth/register', register);

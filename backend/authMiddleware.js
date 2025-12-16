@@ -1,20 +1,18 @@
 const jwt = require('jsonwebtoken');
-const { requireEnv } = require('./config');
-
-const JWT_SECRET = requireEnv('JWT_SECRET', 'dev-secret-change-in-production');
+const { JWT_SECRET } = require('./config');
 
 function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
-  
+
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'No token provided' });
   }
-  
+
   const token = authHeader.substring(7);
-  
+
   jwt.verify(token, JWT_SECRET, (err, decoded) => {
     if (err) return res.status(401).json({ error: 'Invalid token' });
-    
+
     req.userId = decoded.userId;
     next();
   });
