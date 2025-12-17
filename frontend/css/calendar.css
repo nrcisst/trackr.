@@ -1,7 +1,3 @@
-/* ==========================================================================
-   CALENDAR.CSS - Calendar Grid, Day Cells, Year Grid, Journal
-   ========================================================================== */
-
 /* Light mode calendar overrides */
 body.theme-light .day-cell .date-number {
     color: hsl(0 0% 0%);
@@ -55,6 +51,32 @@ body.theme-light .stat-card[data-tooltip]::after {
     color: var(--text-primary);
     border: 1px solid hsl(0 0% 0% / 0.15);
     box-shadow: 0 4px 12px hsl(0 0% 0% / 0.1);
+}
+
+/* Light mode quarterly year grid */
+body.theme-light .quarter-section {
+    background: var(--bg-surface-1);
+    border-color: hsl(0 0% 0% / 0.1);
+}
+
+body.theme-light .year-cell {
+    background: var(--bg-surface-2);
+    border-color: hsl(0 0% 0% / 0.08);
+}
+
+body.theme-light .year-cell:hover {
+    background: var(--bg-surface-hover);
+    border-color: hsl(0 0% 0% / 0.15);
+}
+
+body.theme-light .year-cell.positive {
+    background: color-mix(in srgb, var(--color-success), var(--bg-surface-1) 85%);
+    border-color: color-mix(in srgb, var(--color-success), transparent 60%);
+}
+
+body.theme-light .year-cell.negative {
+    background: color-mix(in srgb, var(--color-danger), var(--bg-surface-1) 85%);
+    border-color: color-mix(in srgb, var(--color-danger), transparent 60%);
 }
 
 /* Journal Entries */
@@ -132,60 +154,127 @@ body.theme-light .stat-card[data-tooltip]::after {
     box-shadow: var(--shadow-lg);
 }
 
-/* Year Grid */
-#year-grid {
+/* Year Grid - Quarterly Layout */
+.year-quarters {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-md);
+}
+
+.quarter-section {
+    background: var(--bg-surface-1);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.quarter-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin: 0 0 var(--space-sm) 0;
+    padding-bottom: var(--space-xs);
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.quarter-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-xs);
+}
+
+.quarter-summary {
+    margin-top: var(--space-sm);
+    padding-top: var(--space-xs);
+    border-top: 1px solid var(--border-subtle);
+    text-align: right;
+}
+
+.quarter-pl {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.quarter-pl.positive {
+    color: var(--color-success);
+}
+
+.quarter-pl.negative {
+    color: var(--color-danger);
+}
+
+/* Responsive quarterly grid */
+@media (max-width: 768px) {
+    .year-quarters {
+        grid-template-columns: 1fr;
+    }
 }
 
 .year-cell {
-    background: var(--bg-surface-1);
+    background: var(--bg-surface-2);
     border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 1.5rem;
-    min-height: 120px;
+    border-radius: var(--radius-sm);
+    padding: 0.75rem;
+    min-height: 70px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.25rem;
     transition: all 0.2s;
     cursor: pointer;
 }
 
 .year-cell:hover {
-    transform: translateY(-3px) rotateX(1.5deg);
+    transform: translateY(-2px);
     background: var(--bg-surface-hover);
-    border-color: hsl(0 0% 100% / 0.12);
-    box-shadow: 0 20px 50px hsl(0 0% 0% / 0.4), 0 0 0 1px hsl(0 0% 100% / 0.05);
+    border-color: var(--border-medium);
+    box-shadow: var(--shadow-md);
 }
 
 .year-cell .month-label {
     font-family: var(--font-sans);
-    font-weight: 700;
-    letter-spacing: 0.05em;
+    font-weight: 600;
+    letter-spacing: 0.03em;
     text-transform: uppercase;
     color: var(--text-secondary);
-    font-size: 0.85rem;
+    font-size: 0.75rem;
 }
 
 .year-cell .month-pl {
     font-family: var(--font-mono);
-    font-size: 1.4rem;
+    font-size: 1rem;
     font-weight: 700;
 }
 
 .year-cell.positive {
-    background: color-mix(in srgb, var(--positive-color), hsl(0 0% 4%) 65%);
+    background: color-mix(in srgb, var(--color-success), var(--bg-surface-1) 80%);
+    border-color: color-mix(in srgb, var(--color-success), transparent 70%);
+}
+
+.year-cell.positive .month-pl {
+    color: var(--color-success);
 }
 
 .year-cell.negative {
-    background: color-mix(in srgb, var(--negative-color), hsl(0 0% 4%) 65%);
+    background: color-mix(in srgb, var(--color-danger), var(--bg-surface-1) 80%);
+    border-color: color-mix(in srgb, var(--color-danger), transparent 70%);
+}
+
+.year-cell.negative .month-pl {
+    color: var(--color-danger);
 }
 
 .year-cell.neutral {
-    background: hsl(0 0% 3%);
+    background: var(--bg-surface-2);
+}
+
+.year-cell.neutral .month-pl {
+    color: var(--text-tertiary);
 }
 
 @keyframes fadeUp {

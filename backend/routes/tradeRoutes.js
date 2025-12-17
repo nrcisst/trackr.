@@ -326,7 +326,7 @@ router.post("/entries", (req, res) => {
 router.put("/entries/:id", (req, res) => {
     const id = req.params.id;
     const userId = req.userId;
-    let { ticker, direction, pnl, tag, confidence, setup_quality } = req.body;
+    let { ticker, direction, entry_price, exit_price, size, pnl, tag, confidence, setup_quality } = req.body;
 
     // Trim strings
     ticker = ticker?.trim();
@@ -369,12 +369,15 @@ router.put("/entries/:id", (req, res) => {
     }
 
     const updateQuery = `UPDATE trade_entries 
-                         SET ticker = ?, direction = ?, pnl = ?, tag = ?, confidence = ?, setup_quality = ?
+                         SET ticker = ?, direction = ?, entry_price = ?, exit_price = ?, size = ?, pnl = ?, tag = ?, confidence = ?, setup_quality = ?
                          WHERE id = ? AND user_id = ?`;
 
     dbClient.run(updateQuery, [
         ticker,
         direction || 'LONG',
+        entry_price || 0,
+        exit_price || 0,
+        size || 0,
         pnl,
         tag || null,
         confidence || null,

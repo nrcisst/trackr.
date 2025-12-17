@@ -344,8 +344,8 @@ let currentYear;
 let currentMonth;
 
 let tradesByDate = {};
-let currentView = 'calendar'; // 'calendar' or 'journal'
-let calendarMode = 'month'; // 'month' or 'year'
+let currentView = 'calendar'; // 'calendar', 'journal', or 'dashboard'
+let calendarMode = 'month'; // 'month', 'week', or 'year'
 let filterDayType = 'all'; // 'all', 'green', 'red'
 let sortBy = 'date'; // 'date', 'pl-high', 'pl-low', 'trades'
 let filterTicker = ''; // ticker filter
@@ -581,10 +581,6 @@ async function fetchMonthData(year, month) {
       tradesByDate[trade.trade_date] = trade;
     });
 
-    tradesJson.data.forEach(trade => {
-      tradesByDate[trade.trade_date] = trade;
-    });
-
     calculateAndRenderMonthlyStats();
 
   } catch (err) {
@@ -682,7 +678,7 @@ function calculateAndRenderMonthlyStats() {
   // Also update header MTD
   mtdPl = monthlyPlForHeader(tradesByDate);
   renderHeaderStatus();
-  updateMonthlyStats();
+  updatePeriodStats();
   renderEquityCurve();
 }
 
@@ -736,69 +732,98 @@ function monthlyPlForHeader(tradesMap) {
   return Object.values(tradesMap).reduce((sum, t) => sum + (t.pl || 0), 0);
 }
 
-// ---- Year Grid ----
+// ---- Year Grid (Quarterly Layout) ----
 
 function renderYearGrid() {
   const grid = document.getElementById('year-grid');
   if (!grid) return;
 
   grid.innerHTML = '';
-  const entries = [];
+  grid.className = 'year-quarters';
 
-  let maxAbs = 0;
-  for (let m = 1; m <= 12; m++) {
-    const pl = yearMonthPl[m] || 0;
-    entries.push({ month: m, pl });
-    if (Math.abs(pl) > maxAbs) maxAbs = Math.abs(pl);
-  }
+  const quarters = [
+    { name: 'Q1', months: [1, 2, 3] },
+    { name: 'Q2', months: [4, 5, 6] },
+    { name: 'Q3', months: [7, 8, 9] },
+    { name: 'Q4', months: [10, 11, 12] }
+  ];
 
-  entries.forEach(({ month, pl }, idx) => {
-    const cell = document.createElement('div');
-    cell.className = 'year-cell';
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-    if (pl > 0) cell.classList.add('positive');
-    else if (pl < 0) cell.classList.add('negative');
-    else cell.classList.add('neutral');
+  quarters.forEach((quarter, qIdx) => {
+    const quarterSection = document.createElement('div');
+    quarterSection.className = 'quarter-section';
 
-    const label = document.createElement('div');
-    label.className = 'month-label';
-    const date = new Date(currentYear, month - 1, 1);
-    label.textContent = date.toLocaleString('default', { month: 'short' });
+    // Quarter header
+    const quarterTitle = document.createElement('h3');
+    quarterTitle.className = 'quarter-title';
+    quarterTitle.textContent = quarter.name;
+    quarterSection.appendChild(quarterTitle);
 
-    const plEl = document.createElement('div');
-    plEl.className = 'month-pl';
-    plEl.textContent = formatPL(pl);
+    // Month grid within quarter
+    const monthGrid = document.createElement('div');
+    monthGrid.className = 'quarter-grid';
 
-    cell.appendChild(label);
-    cell.appendChild(plEl);
+    let quarterTotal = 0;
 
-    // Staggered reveal
-    cell.style.animation = `fadeUp 0.35s ease ${idx * 0.03}s forwards`;
+    quarter.months.forEach((month, mIdx) => {
+      const pl = yearMonthPl[month] || 0;
+      quarterTotal += pl;
 
-    // Click to jump into that month
-    cell.addEventListener('click', async () => {
-      calendarMode = 'month';
-      document.getElementById('mode-month').classList.add('active');
-      document.getElementById('mode-year').classList.remove('active');
-      document.getElementById('yearly-stats').classList.add('hidden');
-      document.getElementById('monthly-stats').classList.remove('hidden');
-      document.getElementById('year-container').classList.add('hidden');
-      document.getElementById('calendar-container').classList.remove('hidden');
-      currentMonth = month - 1;
-      await fetchMonthData(currentYear, currentMonth);
-      renderCalendar();
+      const cell = document.createElement('div');
+      cell.className = 'year-cell';
+
+      if (pl > 0) cell.classList.add('positive');
+      else if (pl < 0) cell.classList.add('negative');
+      else cell.classList.add('neutral');
+
+      const label = document.createElement('div');
+      label.className = 'month-label';
+      label.textContent = monthNames[month - 1];
+
+      const plEl = document.createElement('div');
+      plEl.className = 'month-pl';
+      plEl.textContent = formatPL(pl);
+
+      cell.appendChild(label);
+      cell.appendChild(plEl);
+
+      // Staggered reveal within quarter
+      cell.style.animation = `fadeUp 0.35s ease ${(qIdx * 3 + mIdx) * 0.05}s forwards`;
+
+      // Click to jump into that month
+      cell.addEventListener('click', async () => {
+        currentMonth = month - 1;
+        await fetchMonthData(currentYear, currentMonth);
+        calendarMode = null;
+        setCalendarMode('month');
+      });
+
+      monthGrid.appendChild(cell);
     });
 
-    grid.appendChild(cell);
+    quarterSection.appendChild(monthGrid);
+
+    // Quarter summary
+    const summary = document.createElement('div');
+    summary.className = 'quarter-summary';
+    const quarterPl = document.createElement('span');
+    quarterPl.className = `quarter-pl ${quarterTotal > 0 ? 'positive' : quarterTotal < 0 ? 'negative' : ''}`;
+    quarterPl.textContent = formatPL(quarterTotal);
+    summary.appendChild(quarterPl);
+    quarterSection.appendChild(summary);
+
+    grid.appendChild(quarterSection);
   });
 }
 
-// ---- Monthly Stats ----
+// ---- Period Stats ----
 
-function updateMonthlyStats() {
+function updatePeriodStats() {
   const trades = Object.values(tradesByDate);
 
-  let monthlyPl = 0;
+  let totalPl = 0;
   let tradingDays = 0;
   let greenDays = 0;
   let redDays = 0;
@@ -808,7 +833,7 @@ function updateMonthlyStats() {
   trades.forEach(t => {
     if (typeof t.pl === 'number' && t.pl !== 0) {
       tradingDays++;
-      monthlyPl += t.pl;
+      totalPl += t.pl;
 
       if (t.pl > 0) {
         greenDays++;
@@ -823,14 +848,32 @@ function updateMonthlyStats() {
   const avgGreenDay = greenDays > 0 ? greenDayTotal / greenDays : 0;
   const avgRedDay = redDays > 0 ? redDayTotal / redDays : 0;
 
-  // Update DOM
-  const monthlyPlEl = document.getElementById("monthly-pl");
-  monthlyPlEl.textContent = formatPL(monthlyPl);
-  monthlyPlEl.className = `stat-value ${monthlyPl > 0 ? 'positive' : monthlyPl < 0 ? 'negative' : ''}`;
+  // Update trading days in unified stats
+  const tradingDaysEl = document.getElementById("stat-trading-days");
+  if (tradingDaysEl) tradingDaysEl.textContent = tradingDays;
 
-  document.getElementById("monthly-trading-days").textContent = tradingDays;
-  document.getElementById("monthly-avg-green").textContent = formatPL(avgGreenDay);
-  document.getElementById("monthly-avg-red").textContent = formatPL(avgRedDay);
+  // Update avg green/red day
+  const avgGreenEl = document.getElementById("stat-avg-green");
+  if (avgGreenEl) avgGreenEl.textContent = formatPL(avgGreenDay);
+
+  const avgRedEl = document.getElementById("stat-avg-red");
+  if (avgRedEl) avgRedEl.textContent = formatPL(avgRedDay);
+
+  // Update the period label based on current mode
+  updateStatsPeriodLabel();
+}
+
+function updateStatsPeriodLabel() {
+  const labelEl = document.getElementById("stats-period-label");
+  if (!labelEl) return;
+
+  const labels = {
+    month: 'Monthly P/L',
+    week: 'Weekly P/L',
+    year: 'YTD P/L'
+  };
+
+  labelEl.textContent = labels[calendarMode] || 'Net P/L';
 }
 
 // ---- Yearly Stats ----
@@ -895,6 +938,32 @@ function renderEquityCurve() {
     if (data.length === 0) {
       data.push(0);
       labels.push('Jan');
+    }
+  } else if (calendarMode === 'week' && typeof window.getWeekDays === 'function') {
+    // Filter to only current week's data
+    const weekDays = [];
+    const weekStart = window.currentWeekStart || new Date();
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(weekStart);
+      day.setDate(weekStart.getDate() + i);
+      weekDays.push(day);
+    }
+
+    const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    let cumulative = 0;
+
+    weekDays.forEach((day, index) => {
+      const dateKey = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+      const dayData = tradesByDate[dateKey];
+      const pl = dayData?.pl || 0;
+      cumulative += pl;
+      data.push(cumulative);
+      labels.push(dayNames[index]);
+    });
+
+    if (data.length === 0) {
+      data.push(0);
+      labels.push('Mon');
     }
   } else {
     const trades = Object.entries(tradesByDate)
@@ -1142,47 +1211,10 @@ function applySorting(trades) {
   return sorted;
 }
 
-function toggleView(view) {
-  currentView = view;
-
-  const calendarContainer = document.getElementById('calendar-container');
-  const yearContainer = document.getElementById('year-container');
-  const journalContainer = document.getElementById('journal-container');
-  const calendarBtn = document.getElementById('calendar-view-btn');
-  const journalBtn = document.getElementById('journal-view-btn');
-  const filterControls = document.querySelector('.filter-controls');
-
-  if (view === 'calendar') {
-    if (calendarMode === 'year') {
-      calendarContainer.classList.add('hidden');
-      yearContainer.classList.remove('hidden');
-      document.getElementById('yearly-stats').classList.remove('hidden');
-      document.getElementById('monthly-stats').classList.add('hidden');
-    } else {
-      calendarContainer.classList.remove('hidden');
-      yearContainer.classList.add('hidden');
-      document.getElementById('yearly-stats').classList.add('hidden');
-      document.getElementById('monthly-stats').classList.remove('hidden');
-    }
-    journalContainer.classList.add('hidden');
-    calendarBtn.classList.add('active');
-    journalBtn.classList.remove('active');
-    filterControls.classList.add('hidden');
-  } else {
-    calendarContainer.classList.add('hidden');
-    yearContainer.classList.add('hidden');
-    journalContainer.classList.remove('hidden');
-    calendarBtn.classList.remove('active');
-    journalBtn.classList.add('active');
-    filterControls.classList.remove('hidden');
-    renderJournalView();
-  }
-}
+// View toggle is now handled by dashboard.js (showCalendarView, showJournalView, showDashboardView)
 
 function setupViewControls() {
-  document.getElementById('calendar-view-btn').addEventListener('click', () => toggleView('calendar'));
-  document.getElementById('journal-view-btn').addEventListener('click', () => toggleView('journal'));
-
+  // Filter controls for journal view
   document.getElementById('filter-day-type').addEventListener('change', (e) => {
     filterDayType = e.target.value;
     if (currentView === 'journal') {
@@ -1237,32 +1269,62 @@ function setCalendarMode(mode) {
   calendarMode = mode;
 
   const monthBtn = document.getElementById('mode-month');
+  const weekBtn = document.getElementById('mode-week');
   const yearBtn = document.getElementById('mode-year');
-  monthBtn.classList.toggle('active', mode === 'month');
-  yearBtn.classList.toggle('active', mode === 'year');
+
+  // Update mode toggle button states
+  if (monthBtn) monthBtn.classList.toggle('active', mode === 'month');
+  if (weekBtn) weekBtn.classList.toggle('active', mode === 'week');
+  if (yearBtn) yearBtn.classList.toggle('active', mode === 'year');
+
+  // Hide all calendar containers
+  const calendarContainer = document.getElementById('calendar-container');
+  const weekContainer = document.getElementById('week-container');
+  const yearContainer = document.getElementById('year-container');
+  const dashboardSection = document.getElementById('dashboard-section');
+  const journalContainer = document.getElementById('journal-container');
+
+  if (dashboardSection) dashboardSection.classList.add('hidden');
+  if (journalContainer) journalContainer.classList.add('hidden');
 
   if (mode === 'year') {
-    document.getElementById('calendar-container').classList.add('hidden');
-    document.getElementById('year-container').classList.remove('hidden');
-    document.getElementById('yearly-stats').classList.remove('hidden');
-    document.getElementById('monthly-stats').classList.add('hidden');
+    if (calendarContainer) calendarContainer.classList.add('hidden');
+    if (weekContainer) weekContainer.classList.add('hidden');
+    if (yearContainer) yearContainer.classList.remove('hidden');
     document.getElementById('current-month-label').textContent = `${currentYear}`;
     fetchYearData(currentYear);
     fetchAndRenderYearStats(currentYear);
-
-    renderEquityCurve();
-    renderHeaderStatus();
+  } else if (mode === 'week') {
+    if (calendarContainer) calendarContainer.classList.add('hidden');
+    if (weekContainer) weekContainer.classList.remove('hidden');
+    if (yearContainer) yearContainer.classList.add('hidden');
+    // Load week data and update stats
+    if (typeof window.loadWeekData === 'function') {
+      window.loadWeekData();
+    } else if (typeof renderWeekView === 'function') {
+      renderWeekView();
+    }
   } else {
-    document.getElementById('calendar-container').classList.remove('hidden');
-    document.getElementById('year-container').classList.add('hidden');
-    document.getElementById('yearly-stats').classList.add('hidden');
-    document.getElementById('monthly-stats').classList.remove('hidden');
+    // month mode
+    if (calendarContainer) calendarContainer.classList.remove('hidden');
+    if (weekContainer) weekContainer.classList.add('hidden');
+    if (yearContainer) yearContainer.classList.add('hidden');
     calculateAndRenderMonthlyStats();
     renderCalendar();
-
-    renderEquityCurve();
-    renderHeaderStatus();
   }
+
+  // Update view buttons to show Calendar as active
+  const calendarBtn = document.getElementById('calendar-view-btn');
+  const journalBtn = document.getElementById('journal-view-btn');
+  const dashboardBtn = document.getElementById('dashboard-view-btn');
+  if (calendarBtn) calendarBtn.classList.add('active');
+  if (journalBtn) journalBtn.classList.remove('active');
+  if (dashboardBtn) dashboardBtn.classList.remove('active');
+
+  // Update stats label and render
+  updateStatsPeriodLabel();
+  renderEquityCurve();
+  renderHeaderStatus();
 }
 
 function renderHeaderStatus() {
@@ -1316,6 +1378,13 @@ function renderCalendar() {
   const lastDay = new Date(currentYear, currentMonth + 1, 0);
   const daysInMonth = lastDay.getDate();
   const startWeekday = firstDay.getDay();
+
+  // Update the period label
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
+  if (labelEl) {
+    labelEl.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+  }
 
   // Calculate max P/L for color intensity
   const allPLs = Object.values(tradesByDate).map(d => Math.abs(d.pl || 0));
@@ -1672,6 +1741,14 @@ function editTradeEntry(entry) {
   document.getElementById("entry-confidence").value = entry.confidence || "";
   document.getElementById("entry-quality").value = entry.setup_quality || "";
 
+  // Populate price and size fields
+  const entryPriceInput = document.getElementById("entry-entry-price");
+  const exitPriceInput = document.getElementById("entry-exit-price");
+  const sizeInput = document.getElementById("entry-size");
+  if (entryPriceInput) entryPriceInput.value = entry.entry_price || "";
+  if (exitPriceInput) exitPriceInput.value = entry.exit_price || "";
+  if (sizeInput) sizeInput.value = entry.size || "";
+
   // Change button to "Update"
   const addBtn = document.getElementById("add-trade-btn");
   addBtn.textContent = "Update";
@@ -1808,6 +1885,11 @@ function setupModalButtons() {
     const confidenceInput = document.getElementById("entry-confidence");
     const qualityInput = document.getElementById("entry-quality");
 
+    // Price and size fields (optional)
+    const entryPriceInput = document.getElementById("entry-entry-price");
+    const exitPriceInput = document.getElementById("entry-exit-price");
+    const sizeInput = document.getElementById("entry-size");
+
     const ticker = tickerInput.value.trim().toUpperCase();
     const direction = directionInput.value;
     const plVal = plInput.value;
@@ -1837,9 +1919,9 @@ function setupModalButtons() {
       trade_date: dateKey,
       ticker,
       direction,
-      entry_price: 0,
-      exit_price: 0,
-      size: 0,
+      entry_price: parseFloat(entryPriceInput?.value) || 0,
+      exit_price: parseFloat(exitPriceInput?.value) || 0,
+      size: parseFloat(sizeInput?.value) || 0,
       pnl: parseFloat(plVal),
       notes: "",
       tag: tagInput.value || null,
@@ -1872,6 +1954,9 @@ function setupModalButtons() {
       confidenceInput.value = "";
       qualityInput.value = "";
       directionInput.value = "LONG";
+      if (entryPriceInput) entryPriceInput.value = "";
+      if (exitPriceInput) exitPriceInput.value = "";
+      if (sizeInput) sizeInput.value = "";
 
       // Focus ticker for next entry
       tickerInput.focus();
@@ -1953,6 +2038,7 @@ function setupMonthControls() {
   });
 
   document.getElementById('mode-month').addEventListener('click', () => setCalendarMode('month'));
+  document.getElementById('mode-week').addEventListener('click', () => setCalendarMode('week'));
   document.getElementById('mode-year').addEventListener('click', () => setCalendarMode('year'));
 }
 
@@ -2092,3 +2178,24 @@ window.saveUsername = async function () {
     showNotification('Error updating username', 'error');
   }
 };
+
+// ---- Global Exports ----
+// Expose shared state and functions for use by dashboard.js and utilities.js
+// Note: This is a temporary solution until migrating to ES modules
+
+// Shared state
+window.getTradesByDate = () => tradesByDate;
+window.getCalendarMode = () => calendarMode;
+window.getCurrentView = () => currentView;
+
+// Functions called by other modules
+window.formatPL = formatPL;
+window.openDayModal = openDayModal;
+window.renderCalendar = renderCalendar;
+window.renderJournalView = renderJournalView;
+window.calculateAndRenderMonthlyStats = calculateAndRenderMonthlyStats;
+window.fetchMonthData = fetchMonthData;
+window.showSuccess = showSuccess;
+window.showError = showError;
+window.updateStatsPeriodLabel = updateStatsPeriodLabel;
+window.renderEquityCurve = renderEquityCurve;

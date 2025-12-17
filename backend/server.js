@@ -48,7 +48,7 @@ app.use(session({
     secret: SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: { 
+    cookie: {
         maxAge: 10 * 60 * 1000, // 10 min
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
@@ -60,12 +60,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 app.use(express.static(path.join(__dirname, '../frontend')));
-
-// Serve uploaded files
-app.use('/uploads', express.static(path.join(__dirname, '../uploads'), {
-    maxAge: '1d',
-    etag: true,
-}));
+// Note: Profile images are now stored in Cloudinary, not locally
 
 // Mount routes
 app.use('/', authRoutes);
@@ -80,11 +75,11 @@ app.get(/^\/(?!api|auth|uploads).*/, (req, res) => {
 // Global error handler (must be last)
 app.use((err, req, res, next) => {
     console.error('Error:', err);
-    
+
     if (res.headersSent) {
         return next(err);
     }
-    
+
     res.status(err.status || 500).json({ error: 'Internal server error' });
 });
 

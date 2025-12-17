@@ -3,6 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>trackr.</title>
   <link rel="icon"
     href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23000000'/%3E%3Ctext x='50%25' y='52%25' font-family='IBM Plex Mono, monospace' font-size='32' fill='%23ffffff' text-anchor='middle' dominant-baseline='middle'%3Et%3C/text%3E%3C/svg%3E">
@@ -13,6 +14,7 @@
   <link rel="stylesheet" href="css/calendar.css" />
   <link rel="stylesheet" href="css/modal.css" />
   <link rel="stylesheet" href="css/auth.css" />
+  <link rel="stylesheet" href="css/dashboard.css" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" async></script>
 </head>
 
@@ -70,6 +72,7 @@
         <h1>trackr.</h1>
         <div class="mode-toggle header-mode">
           <button id="mode-month" class="mode-btn active">Monthly</button>
+          <button id="mode-week" class="mode-btn">Weekly</button>
           <button id="mode-year" class="mode-btn">Yearly</button>
         </div>
         <button id="theme-toggle" class="theme-btn" title="Toggle dark mode">
@@ -149,7 +152,7 @@
 
     <section id="stats">
       <div class="stat-card" data-tooltip="Total profit/loss for this period">
-        <div class="stat-label">Net P/L</div>
+        <div class="stat-label" id="stats-period-label">Monthly P/L</div>
         <div class="stat-value" id="stat-net-pl">$0.00</div>
       </div>
       <div class="stat-card" data-tooltip="Percentage of winning trades">
@@ -160,6 +163,10 @@
         <div class="stat-label">Profit Factor</div>
         <div class="stat-value" id="stat-profit-factor">0.00</div>
       </div>
+      <div class="stat-card" data-tooltip="Number of trading days this period">
+        <div class="stat-label">Trading Days</div>
+        <div class="stat-value" id="stat-trading-days">0</div>
+      </div>
       <div class="stat-card" data-tooltip="Biggest single winning trade">
         <div class="stat-label">Max Win</div>
         <div class="stat-value positive" id="stat-max-win">$0.00</div>
@@ -168,54 +175,13 @@
         <div class="stat-label">Max Loss</div>
         <div class="stat-value negative" id="stat-max-loss">$0.00</div>
       </div>
-    </section>
-
-    <!-- Monthly Stats (flows inline with top stats) -->
-    <section id="monthly-stats">
-      <div class="monthly-stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Monthly P/L</div>
-          <div class="stat-value" id="monthly-pl">$0.00</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Trading Days</div>
-          <div class="stat-value" id="monthly-trading-days">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Avg Green Day</div>
-          <div class="stat-value positive" id="monthly-avg-green">$0.00</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Avg Red Day</div>
-          <div class="stat-value negative" id="monthly-avg-red">$0.00</div>
-        </div>
+      <div class="stat-card" data-tooltip="Average profit on winning days">
+        <div class="stat-label">Avg Green Day</div>
+        <div class="stat-value positive" id="stat-avg-green">$0.00</div>
       </div>
-    </section>
-
-
-    <section id="yearly-stats" class="hidden">
-      <h2 class="section-title">Year to Date</h2>
-      <div class="monthly-stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">YTD P/L</div>
-          <div class="stat-value" id="ytd-pl">$0.00</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Green Months</div>
-          <div class="stat-value positive" id="ytd-green-months">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Red Months</div>
-          <div class="stat-value negative" id="ytd-red-months">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Best Month</div>
-          <div class="stat-value positive" id="ytd-best-month">$0.00</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Worst Month</div>
-          <div class="stat-value negative" id="ytd-worst-month">$0.00</div>
-        </div>
+      <div class="stat-card" data-tooltip="Average loss on losing days">
+        <div class="stat-label">Avg Red Day</div>
+        <div class="stat-value negative" id="stat-avg-red">$0.00</div>
       </div>
     </section>
 
@@ -227,11 +193,74 @@
       </div>
     </section>
 
+    <!-- Dashboard Insights (Analytics) -->
+    <section id="dashboard-section" class="hidden">
+      <h2 class="section-title">Performance Insights</h2>
+
+      <div class="insights-grid">
+        <!-- Streaks Card -->
+        <div class="insight-card">
+          <div class="insight-header">
+            <span class="insight-icon"></span>
+            <h3>Trading Streaks</h3>
+          </div>
+          <div class="streak-stats">
+            <div class="streak-item">
+              <span class="streak-label">Current Streak</span>
+              <span id="current-streak" class="streak-value">0 days</span>
+            </div>
+            <div class="streak-item">
+              <span class="streak-label">Best Win Streak</span>
+              <span id="best-win-streak" class="streak-value positive">0 days</span>
+            </div>
+            <div class="streak-item">
+              <span class="streak-label">Worst Loss Streak</span>
+              <span id="worst-loss-streak" class="streak-value negative">0 days</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Day of Week Performance -->
+        <div class="insight-card">
+          <div class="insight-header">
+            <span class="insight-icon"></span>
+            <h3>Day of Week</h3>
+          </div>
+          <div class="chart-container-small">
+            <canvas id="day-of-week-chart"></canvas>
+          </div>
+        </div>
+
+        <!-- Setup Performance -->
+        <div class="insight-card">
+          <div class="insight-header">
+            <span class="insight-icon"></span>
+            <h3>Setup Performance</h3>
+          </div>
+          <div class="chart-container-small">
+            <canvas id="setup-chart"></canvas>
+          </div>
+        </div>
+
+        <!-- P/L Distribution -->
+        <div class="insight-card">
+          <div class="insight-header">
+            <span class="insight-icon"></span>
+            <h3>P/L Distribution</h3>
+          </div>
+          <div class="chart-container-small">
+            <canvas id="pl-distribution-chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- View Toggle & Filters -->
     <section id="view-controls">
       <div class="view-toggle">
         <button id="calendar-view-btn" class="view-btn active">Calendar</button>
         <button id="journal-view-btn" class="view-btn">Journal</button>
+        <button id="dashboard-view-btn" class="view-btn">Dashboard</button>
       </div>
 
       <div class="filter-controls hidden">
@@ -258,6 +287,16 @@
       <!-- Calendar View -->
       <div id="calendar-container">
         <div id="calendar"></div>
+      </div>
+
+      <!-- Week View -->
+      <div id="week-container" class="hidden">
+        <div class="week-nav-controls">
+          <button id="prev-week-btn" class="nav-btn" onclick="prevWeek()">&larr; Prev Week</button>
+          <span id="week-label" class="week-label">Week</span>
+          <button id="next-week-btn" class="nav-btn" onclick="nextWeek()">Next Week &rarr;</button>
+        </div>
+        <div id="week-grid" class="week-grid"></div>
       </div>
 
       <!-- Yearly View -->
@@ -328,10 +367,18 @@
               <option value="LONG">Long</option>
               <option value="SHORT">Short</option>
             </select>
-            <input type="number" id="entry-pl" placeholder="P/L" />
+            <input type="number" id="entry-pl" placeholder="P/L" step="0.01" />
           </div>
 
-          <!-- Row 2: Optional Data -->
+          <!-- Row 2: Price & Size (Optional - for position sizing) -->
+          <div class="form-row price-fields">
+            <input type="number" id="entry-entry-price" placeholder="Entry $" step="0.01" />
+            <input type="number" id="entry-exit-price" placeholder="Exit $" step="0.01" />
+            <input type="number" id="entry-size" placeholder="Shares" step="1" />
+            <button type="button" id="calc-pl-btn" class="calc-btn" title="Calculate P/L from prices">⚡</button>
+          </div>
+
+          <!-- Row 3: Tags & Quality -->
           <div class="form-row optional-fields">
             <select id="entry-tag">
               <option value="">Tag</option>
@@ -406,6 +453,8 @@
   <!-- Notification Toast -->
   <div id="notification" class="notification"></div>
 
+  <script src="js/utilities.js"></script>
+  <script src="js/dashboard.js"></script>
   <script src="js/app.js"></script>
 </body>
 
