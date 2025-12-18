@@ -1098,11 +1098,12 @@ function renderEquityCurve() {
           display: false
         },
         tooltip: {
-          backgroundColor: 'rgba(17, 17, 17, 0.95)',
+          backgroundColor: 'rgba(15, 23, 42, 0.95)',
           titleColor: '#fff',
-          bodyColor: '#fff',
+          bodyColor: 'rgba(255, 255, 255, 0.8)',
           borderColor: 'rgba(255, 255, 255, 0.1)',
           borderWidth: 1,
+          cornerRadius: 8,
           padding: 12,
           displayColors: false,
           animation: {
@@ -1111,7 +1112,16 @@ function renderEquityCurve() {
           },
           callbacks: {
             label: function (context) {
-              return `P/L: $${context.parsed.y.toFixed(2)}`;
+              const value = context.parsed.y;
+              const absValue = Math.abs(value);
+              // Format with K/M abbreviations
+              if (absValue >= 1000000) {
+                return `P/L: ${value < 0 ? '-' : ''}$${(absValue / 1000000).toFixed(2)}M`;
+              }
+              if (absValue >= 1000) {
+                return `P/L: ${value < 0 ? '-' : ''}$${(absValue / 1000).toFixed(2)}K`;
+              }
+              return `P/L: ${value < 0 ? '-' : ''}$${absValue.toFixed(2)}`;
             }
           }
         }
@@ -1119,24 +1129,37 @@ function renderEquityCurve() {
       scales: {
         x: {
           grid: {
-            color: 'rgba(255, 255, 255, 0.05)',
+            color: 'rgba(255, 255, 255, 0.03)',
             drawBorder: false
           },
+          border: { display: false },
           ticks: {
-            color: 'rgba(255, 255, 255, 0.6)',
+            color: 'rgba(255, 255, 255, 0.5)',
+            font: { size: 11 },
             maxRotation: 45,
             minRotation: 45
           }
         },
         y: {
           grid: {
-            color: 'rgba(255, 255, 255, 0.05)',
+            color: 'rgba(255, 255, 255, 0.03)',
             drawBorder: false
           },
+          border: { display: false },
           ticks: {
-            color: 'rgba(255, 255, 255, 0.6)',
+            color: 'rgba(255, 255, 255, 0.5)',
+            font: { size: 11 },
+            padding: 8,
             callback: function (value) {
-              return '$' + value.toFixed(0);
+              const absValue = Math.abs(value);
+              // Format with K/M abbreviations
+              if (absValue >= 1000000) {
+                return (value < 0 ? '-' : '') + '$' + (absValue / 1000000).toFixed(1) + 'M';
+              }
+              if (absValue >= 1000) {
+                return (value < 0 ? '-' : '') + '$' + (absValue / 1000).toFixed(1) + 'K';
+              }
+              return (value < 0 ? '-' : '') + '$' + absValue.toFixed(0);
             }
           }
         }

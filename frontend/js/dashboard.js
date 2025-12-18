@@ -10,6 +10,78 @@ Object.defineProperty(window, 'currentWeekStart', {
     get: () => currentWeekStart
 });
 
+// ---- Premium Number Formatting ----
+// Format currency values with K/M abbreviations for compact display
+function formatCurrencyCompact(value) {
+    const absValue = Math.abs(value);
+    if (absValue >= 1000000) {
+        return (value < 0 ? '-' : '') + '$' + (absValue / 1000000).toFixed(1) + 'M';
+    }
+    if (absValue >= 1000) {
+        return (value < 0 ? '-' : '') + '$' + (absValue / 1000).toFixed(1) + 'K';
+    }
+    return (value < 0 ? '-' : '') + '$' + absValue.toFixed(0);
+}
+
+// Premium chart theme configuration
+const premiumChartTheme = {
+    gridColor: 'rgba(255, 255, 255, 0.04)',
+    tickColor: 'rgba(255, 255, 255, 0.5)',
+    positiveColor: 'rgba(52, 211, 153, 0.85)',
+    positiveGlow: 'rgba(52, 211, 153, 0.3)',
+    negativeColor: 'rgba(248, 113, 113, 0.85)',
+    negativeGlow: 'rgba(248, 113, 113, 0.3)',
+    accentColors: [
+        'rgba(99, 102, 241, 0.85)',   // Indigo
+        'rgba(139, 92, 246, 0.85)',   // Purple
+        'rgba(236, 72, 153, 0.85)',   // Pink
+        'rgba(245, 158, 11, 0.85)',   // Amber
+        'rgba(6, 182, 212, 0.85)',    // Cyan
+        'rgba(34, 197, 94, 0.85)'     // Green
+    ],
+    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif"
+};
+
+// Get data filtered by current calendar mode
+function getFilteredTradesData() {
+    const mode = window.getCalendarMode?.() || 'month';
+    const allTrades = window.getTradesByDate?.() || {};
+
+    if (mode === 'week' && window.currentWeekStart) {
+        const weekDays = getWeekDays(window.currentWeekStart);
+        const filtered = {};
+        weekDays.forEach(day => {
+            const dateKey = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+            if (allTrades[dateKey]) {
+                filtered[dateKey] = allTrades[dateKey];
+            }
+        });
+        return filtered;
+    }
+
+    // For month and year modes, return existing data
+    return allTrades;
+}
+
+function getFilteredEntriesData() {
+    const mode = window.getCalendarMode?.() || 'month';
+    const allEntriesData = allEntries || {};
+
+    if (mode === 'week' && window.currentWeekStart) {
+        const weekDays = getWeekDays(window.currentWeekStart);
+        const filtered = {};
+        weekDays.forEach(day => {
+            const dateKey = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+            if (allEntriesData[dateKey]) {
+                filtered[dateKey] = allEntriesData[dateKey];
+            }
+        });
+        return filtered;
+    }
+
+    return allEntriesData;
+}
+
 function initWeekView() {
     const today = new Date();
     // Start week on Monday
@@ -198,12 +270,15 @@ function renderDayOfWeekChart() {
     const ctx = document.getElementById('day-of-week-chart');
     if (!ctx) return;
 
+    // Use filtered data based on calendar mode
+    const filteredTrades = getFilteredTradesData();
+
     // Calculate P/L by day of week
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const plByDay = [0, 0, 0, 0, 0, 0, 0];
     const countByDay = [0, 0, 0, 0, 0, 0, 0];
 
-    Object.entries(window.getTradesByDate?.() || {}).forEach(([dateKey, data]) => {
+    Object.entries(filteredTrades).forEach(([dateKey, data]) => {
         const date = new Date(dateKey + 'T12:00:00');
         const dayIndex = date.getDay();
         if (data.pl) {
@@ -226,25 +301,56 @@ function renderDayOfWeekChart() {
             datasets: [{
                 label: 'Avg P/L',
                 data: avgByDay,
-                backgroundColor: avgByDay.map(v => v >= 0 ? 'rgba(16, 185, 129, 0.8)' : 'rgba(239, 68, 68, 0.8)'),
-                borderRadius: 4
+                backgroundColor: avgByDay.map(v => v >= 0 ? premiumChartTheme.positiveColor : premiumChartTheme.negativeColor),
+                hoverBackgroundColor: avgByDay.map(v => v >= 0 ? 'rgba(52, 211, 153, 1)' : 'rgba(248, 113, 113, 1)'),
+                borderRadius: 6,
+                borderSkipped: false
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            animation: {
+                duration: 600,
+                easing: 'easeOutQuart'
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleColor: '#fff',
+                    bodyColor: 'rgba(255, 255, 255, 0.8)',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: {
+                        label: ctx => formatCurrencyCompact(ctx.raw)
+                    }
+                }
+            },
             scales: {
                 y: {
-                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    grid: {
+                        color: premiumChartTheme.gridColor,
+                        drawBorder: false
+                    },
+                    border: { display: false },
                     ticks: {
-                        color: 'rgba(255,255,255,0.6)',
-                        callback: v => '$' + v.toFixed(0)
+                        color: premiumChartTheme.tickColor,
+                        font: { size: 11 },
+                        padding: 8,
+                        callback: v => formatCurrencyCompact(v)
                     }
                 },
                 x: {
                     grid: { display: false },
-                    ticks: { color: 'rgba(255,255,255,0.6)' }
+                    border: { display: false },
+                    ticks: {
+                        color: premiumChartTheme.tickColor,
+                        font: { size: 11, weight: '500' }
+                    }
                 }
             }
         }
@@ -255,10 +361,13 @@ function renderSetupChart() {
     const ctx = document.getElementById('setup-chart');
     if (!ctx) return;
 
-    // Gather setup/tag statistics from all entries
+    // Use filtered entries based on calendar mode
+    const filteredEntries = getFilteredEntriesData();
+
+    // Gather setup/tag statistics
     const setupStats = {};
 
-    Object.values(allEntries || {}).forEach(dayEntries => {
+    Object.values(filteredEntries).forEach(dayEntries => {
         (Array.isArray(dayEntries) ? dayEntries : []).forEach(entry => {
             const tag = entry.tag || 'Untagged';
             if (!setupStats[tag]) {
@@ -271,15 +380,14 @@ function renderSetupChart() {
     });
 
     const labels = Object.keys(setupStats);
-    const winRates = labels.map(tag =>
-        setupStats[tag].total > 0 ? (setupStats[tag].wins / setupStats[tag].total * 100) : 0
-    );
+    if (labels.length === 0) {
+        if (setupChart) setupChart.destroy();
+        return;
+    }
 
     if (setupChart) {
         setupChart.destroy();
     }
-
-    const colors = ['#10B981', '#3B82F6', '#8B5CF6', '#F59E0B', '#EF4444', '#EC4899'];
 
     setupChart = new Chart(ctx, {
         type: 'doughnut',
@@ -287,17 +395,61 @@ function renderSetupChart() {
             labels: labels,
             datasets: [{
                 data: labels.map(tag => setupStats[tag].total),
-                backgroundColor: labels.map((_, i) => colors[i % colors.length]),
-                borderWidth: 0
+                backgroundColor: premiumChartTheme.accentColors.slice(0, labels.length),
+                hoverBackgroundColor: premiumChartTheme.accentColors.map(c => c.replace('0.85', '1')),
+                borderWidth: 0,
+                spacing: 2
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
+            cutout: '65%',
+            animation: {
+                animateRotate: true,
+                duration: 800,
+                easing: 'easeOutQuart'
+            },
             plugins: {
                 legend: {
                     position: 'right',
-                    labels: { color: 'rgba(255,255,255,0.8)', boxWidth: 12, padding: 8 }
+                    labels: {
+                        color: premiumChartTheme.tickColor,
+                        boxWidth: 12,
+                        padding: 10,
+                        font: { size: 11 },
+                        generateLabels: chart => {
+                            const data = chart.data;
+                            return data.labels.map((label, i) => ({
+                                text: `${label} (${data.datasets[0].data[i]})`,
+                                fillStyle: data.datasets[0].backgroundColor[i],
+                                hidden: false,
+                                index: i
+                            }));
+                        }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleColor: '#fff',
+                    bodyColor: 'rgba(255, 255, 255, 0.8)',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    padding: 12,
+                    callbacks: {
+                        label: ctx => {
+                            const tag = labels[ctx.dataIndex];
+                            const winRate = setupStats[tag].total > 0
+                                ? ((setupStats[tag].wins / setupStats[tag].total) * 100).toFixed(0)
+                                : 0;
+                            return [
+                                `Trades: ${setupStats[tag].total}`,
+                                `Win Rate: ${winRate}%`,
+                                `P/L: ${formatCurrencyCompact(setupStats[tag].pl)}`
+                            ];
+                        }
+                    }
                 }
             }
         }
@@ -308,9 +460,12 @@ function renderPlDistributionChart() {
     const ctx = document.getElementById('pl-distribution-chart');
     if (!ctx) return;
 
+    // Use filtered entries based on calendar mode
+    const filteredEntries = getFilteredEntriesData();
+
     // Create histogram of P/L values
     const plValues = [];
-    Object.values(allEntries || {}).forEach(dayEntries => {
+    Object.values(filteredEntries).forEach(dayEntries => {
         (Array.isArray(dayEntries) ? dayEntries : []).forEach(entry => {
             if (entry.pnl !== undefined) plValues.push(entry.pnl);
         });
@@ -329,11 +484,14 @@ function renderPlDistributionChart() {
 
     const bins = Array(binCount).fill(0);
     const binLabels = [];
+    const binColors = [];
 
     for (let i = 0; i < binCount; i++) {
         const binStart = min + i * binSize;
         const binEnd = binStart + binSize;
-        binLabels.push(`$${binStart.toFixed(0)}`);
+        const binMid = (binStart + binEnd) / 2;
+        binLabels.push(formatCurrencyCompact(binStart));
+        binColors.push(binMid >= 0 ? premiumChartTheme.positiveColor : premiumChartTheme.negativeColor);
 
         plValues.forEach(v => {
             if (v >= binStart && v < binEnd) bins[i]++;
@@ -349,24 +507,67 @@ function renderPlDistributionChart() {
         data: {
             labels: binLabels,
             datasets: [{
-                label: 'Frequency',
+                label: 'Trades',
                 data: bins,
-                backgroundColor: 'rgba(59, 130, 246, 0.8)',
-                borderRadius: 4
+                backgroundColor: binColors,
+                hoverBackgroundColor: binColors.map(c => c.replace('0.85', '1')),
+                borderRadius: 4,
+                borderSkipped: false
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
+            animation: {
+                duration: 600,
+                easing: 'easeOutQuart'
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    titleColor: '#fff',
+                    bodyColor: 'rgba(255, 255, 255, 0.8)',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    padding: 12,
+                    displayColors: false,
+                    callbacks: {
+                        title: ctx => `P/L Range: ${ctx[0].label}`,
+                        label: ctx => `${ctx.raw} trades`
+                    }
+                }
+            },
             scales: {
                 y: {
-                    grid: { color: 'rgba(255,255,255,0.05)' },
-                    ticks: { color: 'rgba(255,255,255,0.6)' }
+                    grid: {
+                        color: premiumChartTheme.gridColor,
+                        drawBorder: false
+                    },
+                    border: { display: false },
+                    ticks: {
+                        color: premiumChartTheme.tickColor,
+                        font: { size: 11 },
+                        padding: 8,
+                        stepSize: 1
+                    },
+                    title: {
+                        display: true,
+                        text: 'Trades',
+                        color: 'rgba(255, 255, 255, 0.4)',
+                        font: { size: 10 }
+                    }
                 },
                 x: {
                     grid: { display: false },
-                    ticks: { color: 'rgba(255,255,255,0.6)', maxRotation: 45 }
+                    border: { display: false },
+                    ticks: {
+                        color: premiumChartTheme.tickColor,
+                        font: { size: 10 },
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
                 }
             }
         }
